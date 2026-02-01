@@ -1,0 +1,29 @@
+#!/bin/bash
+
+if type update-alternatives 2>/dev/null >&1; then
+    # Remove previous link if it doesn't use update-alternatives
+    if [ -L '/usr/bin/sparkle' -a -e '/usr/bin/sparkle' -a "`readlink '/usr/bin/sparkle'`" != '/etc/alternatives/sparkle' ]; then
+        rm -f '/usr/bin/sparkle'
+    fi
+    update-alternatives --install '/usr/bin/sparkle' 'sparkle' '/opt/sparkle/sparkle' 100 || ln -sf '/opt/sparkle/sparkle' '/usr/bin/sparkle'
+else
+    ln -sf '/opt/sparkle/sparkle' '/usr/bin/sparkle'
+fi
+
+sed -i 's/Name=sparkle/Name=Sparkle/' '/usr/share/applications/sparkle.desktop'
+
+chmod 4755 '/opt/sparkle/chrome-sandbox' || true
+chmod +sx /opt/sparkle/resources/sidecar/mihomo
+chmod +sx /opt/sparkle/resources/sidecar/mihomo-alpha
+
+if [ -d '/opt/sparkle/resources/files/sub-store-frontend' ]; then
+    chmod -R go-w '/opt/sparkle/resources/files/sub-store-frontend' 2>/dev/null || true
+fi
+
+if hash update-mime-database 2>/dev/null; then
+    update-mime-database /usr/share/mime || true
+fi
+
+if hash update-desktop-database 2>/dev/null; then
+    update-desktop-database /usr/share/applications || true
+fi
