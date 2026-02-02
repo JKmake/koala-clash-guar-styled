@@ -97,7 +97,7 @@ const ProfileItem: React.FC<Props> = (props) => {
       } as MenuItem,
       {
         key: 'edit-rules',
-        label: t('profile.editRules'),
+        label: t('profile.editRule'),
         showDivider: false,
         color: 'default',
         className: ''
