@@ -12,7 +12,9 @@ import {
 } from '@renderer/utils/ipc'
 import { platform } from '@renderer/utils/init'
 import { IoIosHelpCircle } from 'react-icons/io'
+import { IoSettings } from 'react-icons/io5'
 import { BiCopy } from 'react-icons/bi'
+import { useNavigate } from 'react-router-dom'
 import EditableList from '../base/base-list-editor'
 import { useTranslation } from 'react-i18next'
 
@@ -20,6 +22,7 @@ const emptyArray: string[] = []
 
 const AdvancedSettings: React.FC = () => {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { appConfig, patchAppConfig } = useAppConfig()
   const {
     controlDns = true,
@@ -174,7 +177,15 @@ const AdvancedSettings: React.FC = () => {
           </Select>
         </SettingItem>
       )}
-      <SettingItem title={t('settings.advanced.takeOverDNS')} divider>
+      <SettingItem
+        title={t('settings.advanced.takeOverDNS')}
+        actions={
+          <Button isIconOnly size="sm" variant="light" onPress={() => navigate('/dns')}>
+            <IoSettings className="text-lg" />
+          </Button>
+        }
+        divider
+      >
         <Switch
           size="sm"
           isSelected={controlDns}
@@ -189,7 +200,15 @@ const AdvancedSettings: React.FC = () => {
           }}
         />
       </SettingItem>
-      <SettingItem title={t('settings.advanced.takeOverSniffer')} divider>
+      <SettingItem
+        title={t('settings.advanced.takeOverSniffer')}
+        actions={
+          <Button isIconOnly size="sm" variant="light" onPress={() => navigate('/sniffer')}>
+            <IoSettings className="text-lg" />
+          </Button>
+        }
+        divider
+      >
         <Switch
           size="sm"
           isSelected={controlSniff}
