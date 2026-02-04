@@ -16,7 +16,6 @@ import { createElevateTaskSync } from './sys/misc'
 import { initProfileUpdater } from './core/profileUpdater'
 import { existsSync, writeFileSync } from 'fs'
 import { exePath, taskDir } from './utils/dirs'
-import { startMonitor } from './resolve/trafficMonitor'
 import { showFloatingWindow } from './resolve/floatingWindow'
 import { getAppConfigSync } from './config/app'
 import { getUserAgent } from './utils/userAgent'
@@ -285,14 +284,6 @@ app.whenReady().then(async () => {
     }
   })()
 
-  const monitorPromise = (async (): Promise<void> => {
-    try {
-      await startMonitor()
-    } catch {
-      // ignore
-    }
-  })()
-
   await createWindowPromise
 
   const uiTasks: Promise<void>[] = [initShortcut()]
@@ -306,7 +297,7 @@ app.whenReady().then(async () => {
 
   await Promise.all(uiTasks)
 
-  await Promise.all([coreStartPromise, monitorPromise])
+  await Promise.all([coreStartPromise])
 
   if (coreStarted) {
     mainWindow?.webContents.send('core-started')

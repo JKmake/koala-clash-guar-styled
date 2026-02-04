@@ -435,8 +435,6 @@ export default {
       rotateFloatingIcon: '根据网速旋转悬浮窗图标',
       disableTrayIcon: '禁用托盘图标',
       trayShowNodeInfo: '托盘菜单显示节点信息',
-      statusBarShowSpeed: '状态栏显示网速信息',
-      taskbarShowSpeed: '任务栏显示网速信息',
       showDockIcon: '显示 Dock 图标',
       useSystemTitleBar: '使用系统标题栏',
       backgroundColor: '背景色',

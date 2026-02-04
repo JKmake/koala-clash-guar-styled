@@ -15,7 +15,6 @@ import {
   setDockVisible,
   showFloatingWindow,
   showTrayIcon,
-  startMonitor,
   writeTheme
 } from '@renderer/utils/ipc'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
@@ -35,7 +34,6 @@ const AppearanceConfig: React.FC = () => {
   const { setTheme } = useTheme()
   const {
     useDockIcon = true,
-    showTraffic = false,
     proxyInTray = true,
     disableTray = false,
     showFloatingWindow: showFloating = false,
@@ -147,23 +145,6 @@ const AppearanceConfig: React.FC = () => {
                 isSelected={proxyInTray}
                 onValueChange={async (v) => {
                   await patchAppConfig({ proxyInTray: v })
-                }}
-              />
-            </SettingItem>
-            <SettingItem
-              title={
-                platform === 'win32'
-                  ? t('settings.appearance.taskbarShowSpeed')
-                  : t('settings.appearance.statusBarShowSpeed')
-              }
-              divider
-            >
-              <Switch
-                size="sm"
-                isSelected={showTraffic}
-                onValueChange={async (v) => {
-                  await patchAppConfig({ showTraffic: v })
-                  await startMonitor()
                 }}
               />
             </SettingItem>

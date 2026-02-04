@@ -82,7 +82,6 @@ interface AppConfig {
   controlDns?: boolean
   controlSniff?: boolean
   useDockIcon?: boolean
-  showTraffic?: boolean
   useCustomTrayMenu?: boolean
   hosts: IHost[]
   showWindowShortcut?: string

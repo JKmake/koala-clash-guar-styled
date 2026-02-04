@@ -36,7 +36,6 @@ import { mainWindow } from '..'
 import path from 'path'
 import os from 'os'
 import { createWriteStream, existsSync } from 'fs'
-import { startMonitor } from '../resolve/trafficMonitor'
 import { disableSysProxy, triggerSysProxy } from '../sys/sysproxy'
 import { getAxios } from './mihomoApi'
 import { setSysDns } from '../service/api'
@@ -406,7 +405,6 @@ export async function keepCoreAlive(): Promise<void> {
 
 export async function quitWithoutCore(): Promise<void> {
   await keepCoreAlive()
-  await startMonitor(true)
   app.exit()
 }
 

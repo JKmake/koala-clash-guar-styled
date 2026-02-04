@@ -395,8 +395,6 @@ export default {
       rotateFloatingIcon: 'Вращать плавающую иконку в зависимости от скорости сети',
       disableTrayIcon: 'Отключить иконку в трее',
       trayShowNodeInfo: 'Показать информацию об узле в меню трея',
-      statusBarShowSpeed: 'Показывать скорость сети в строке состояния',
-      taskbarShowSpeed: 'Показывать скорость сети на панели задач',
       showDockIcon: 'Показать иконку в Dock',
       useSystemTitleBar: 'Использовать системную строку заголовка',
       backgroundColor: 'Цвет фона',

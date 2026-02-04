@@ -407,8 +407,6 @@ export default {
       rotateFloatingIcon: 'Rotate floating icon based on network speed',
       disableTrayIcon: 'Disable tray icon',
       trayShowNodeInfo: 'Show node info in tray menu',
-      statusBarShowSpeed: 'Show network speed in status bar',
-      taskbarShowSpeed: 'Show network speed in taskbar',
       showDockIcon: 'Show Dock icon',
       useSystemTitleBar: 'Use system title bar',
       backgroundColor: 'Background Color',
