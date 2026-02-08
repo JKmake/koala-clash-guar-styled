@@ -1,4 +1,8 @@
-import { Avatar, Button, Card, CardBody, Chip } from '@heroui/react'
+import { Avatar, AvatarImage } from '@renderer/components/ui/avatar'
+import { Badge } from '@renderer/components/ui/badge'
+import { Button } from '@renderer/components/ui/button'
+import { Card, CardContent } from '@renderer/components/ui/card'
+import { Spinner } from '@renderer/components/ui/spinner'
 import BasePage from '@renderer/components/base/base-page'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import {
@@ -219,21 +223,31 @@ const Proxies: React.FC = () => {
         <div
           className={`w-full pt-2 ${index === groupCounts.length - 1 && !isOpen[index] ? 'pb-2' : ''} px-2`}
         >
-          <Card as="div" isPressable fullWidth onPress={() => toggleOpen(index)}>
-            <CardBody className="w-full h-14">
+          <Card
+            className="w-full cursor-pointer py-0 transition-colors hover:bg-accent/50"
+            role="button"
+            tabIndex={0}
+            onClick={() => toggleOpen(index)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                toggleOpen(index)
+              }
+            }}
+          >
+            <CardContent className="w-full h-14 px-4 py-2">
               <div className="flex justify-between h-full">
                 <div className="flex text-ellipsis overflow-hidden whitespace-nowrap h-full">
                   {groups[index].icon ? (
-                    <Avatar
-                      className="bg-transparent mr-2 w-8 h-8"
-                      size="sm"
-                      radius="sm"
-                      src={
-                        groups[index].icon.startsWith('<svg')
-                          ? `data:image/svg+xml;utf8,${groups[index].icon}`
-                          : localStorage.getItem(groups[index].icon) || groups[index].icon
-                      }
-                    />
+                    <Avatar className="bg-transparent mr-2 rounded-md self-center">
+                      <AvatarImage
+                        src={
+                          groups[index].icon.startsWith('<svg')
+                            ? `data:image/svg+xml;utf8,${groups[index].icon}`
+                            : localStorage.getItem(groups[index].icon) || groups[index].icon
+                        }
+                      />
+                    </Avatar>
                   ) : null}
                   <div
                     className={`flex flex-col h-full ${groupDisplayLayout === 'double' ? '' : 'justify-center'}`}
@@ -266,40 +280,42 @@ const Proxies: React.FC = () => {
                 </div>
                 <div className="flex items-center">
                   <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                    <Chip size="sm" className="my-1 mr-2">
+                    <Badge variant="secondary" className="my-1 mr-2">
                       {groups[index].all.length}
-                    </Chip>
+                    </Badge>
                     <CollapseInput
-                      title={t('sider.searchNode')}
                       value={searchValue[index]}
                       onValueChange={(v) => updateSearchValue(index, v)}
                     />
                     <Button
                       title={t('sider.locateCurrentNode')}
-                      variant="light"
-                      size="sm"
-                      isIconOnly
-                      onPress={() => scrollToCurrentProxy(index)}
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => scrollToCurrentProxy(index)}
                     >
                       <FaLocationCrosshairs className="text-lg text-foreground-500" />
                     </Button>
                     <Button
                       title={t('sider.delayTest')}
-                      variant="light"
-                      isLoading={delaying[index]}
-                      size="sm"
-                      isIconOnly
-                      onPress={() => onGroupDelay(index)}
+                      variant="ghost"
+                      size="icon-sm"
+                      disabled={delaying[index]}
+                      aria-busy={delaying[index]}
+                      onClick={() => onGroupDelay(index)}
                     >
-                      <MdOutlineSpeed className="text-lg text-foreground-500" />
+                      {delaying[index] ? (
+                        <Spinner className="size-4 text-foreground-500" />
+                      ) : (
+                        <MdOutlineSpeed className="text-lg text-foreground-500" />
+                      )}
                     </Button>
                   </div>
                   <IoIosArrowBack
-                    className={`transition duration-200 ml-2 h-[32px] text-lg text-foreground-500 flex items-center ${isOpen[index] ? '-rotate-90' : ''}`}
+                    className={`transition duration-200 ml-2 h-8 text-lg text-foreground-500 flex items-center ${isOpen[index] ? '-rotate-90' : ''}`}
                   />
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       ) : (
@@ -376,12 +392,11 @@ const Proxies: React.FC = () => {
       title={t('pages.proxies.title')}
       header={
         <Button
-          size="sm"
-          isIconOnly
-          variant="light"
+          size="icon-sm"
+          variant="ghost"
           className="app-nodrag"
           title={t('pages.proxies.proxyGroupSettings')}
-          onPress={() => setIsSettingModalOpen(true)}
+          onClick={() => setIsSettingModalOpen(true)}
         >
           <MdTune className="text-lg" />
         </Button>

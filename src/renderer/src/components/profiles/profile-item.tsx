@@ -1,21 +1,20 @@
+import { Badge } from '@renderer/components/ui/badge'
+import { Button } from '@renderer/components/ui/button'
+import { Card, CardContent, CardFooter } from '@renderer/components/ui/card'
 import {
-  Button,
-  Card,
-  CardBody,
-  CardFooter,
-  Chip,
-  Dropdown,
-  DropdownItem,
   DropdownMenu,
-  DropdownTrigger,
-  Progress,
-  Tooltip
-} from '@heroui/react'
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@renderer/components/ui/dropdown-menu'
+import { Progress } from '@renderer/components/ui/progress'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import { useTranslation } from 'react-i18next'
 import { calcPercent, calcTraffic } from '@renderer/utils/calc'
 import { IoMdMore, IoMdRefresh } from 'react-icons/io'
 import dayjs from 'dayjs'
-import React, { Key, useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import EditFileModal from './edit-file-modal'
 import EditRulesModal from './edit-rules-modal'
 import EditInfoModal from './edit-info-modal'
@@ -40,8 +39,7 @@ interface MenuItem {
   key: string
   label: string
   showDivider: boolean
-  color: 'default' | 'danger'
-  className: string
+  variant: 'default' | 'destructive'
 }
 const ProfileItem: React.FC<Props> = (props) => {
   const { t } = useTranslation()
@@ -85,36 +83,31 @@ const ProfileItem: React.FC<Props> = (props) => {
         key: 'edit-info',
         label: t('profile.editInfo'),
         showDivider: false,
-        color: 'default',
-        className: ''
+        variant: 'default'
       } as MenuItem,
       {
         key: 'edit-file',
         label: t('profile.editFile'),
         showDivider: false,
-        color: 'default',
-        className: ''
+        variant: 'default'
       } as MenuItem,
       {
         key: 'edit-rules',
         label: t('profile.editRule'),
         showDivider: false,
-        color: 'default',
-        className: ''
+        variant: 'default'
       } as MenuItem,
       {
         key: 'open-file',
         label: t('profile.openFile'),
         showDivider: true,
-        color: 'default',
-        className: ''
+        variant: 'default'
       } as MenuItem,
       {
         key: 'delete',
         label: t('profile.delete'),
         showDivider: false,
-        color: 'danger',
-        className: 'text-danger'
+        variant: 'destructive'
       } as MenuItem
     ]
     if (info.home) {
@@ -122,14 +115,13 @@ const ProfileItem: React.FC<Props> = (props) => {
         key: 'home',
         label: t('profile.homepage'),
         showDivider: false,
-        color: 'default',
-        className: ''
+        variant: 'default'
       } as MenuItem)
     }
     return list
   }, [info, t])
 
-  const onMenuAction = async (key: Key): Promise<void> => {
+  const onMenuAction = (key: string): void => {
     switch (key) {
       case 'edit-info': {
         setOpenInfoEditor(true)
@@ -144,7 +136,7 @@ const ProfileItem: React.FC<Props> = (props) => {
         break
       }
       case 'open-file': {
-        openFile('profile', info.id)
+        openFile('profile')
         break
       }
       case 'delete': {
@@ -184,7 +176,6 @@ const ProfileItem: React.FC<Props> = (props) => {
       {openFileEditor && (
         <EditFileModal
           id={info.id}
-          isRemote={info.type === 'remote'}
           onClose={() => setOpenFileEditor(false)}
         />
       )}
@@ -210,20 +201,17 @@ const ProfileItem: React.FC<Props> = (props) => {
         />
       )}
       <Card
-        as="div"
-        fullWidth
-        isPressable
-        onPress={() => {
+        onClick={() => {
           if (disableSelect || switching) return
           setSelecting(true)
           onClick().finally(() => {
             setSelecting(false)
           })
         }}
-        className={`${isCurrent ? 'bg-primary' : ''} ${selecting ? 'blur-sm' : ''}`}
+        className={`w-full cursor-pointer py-0 gap-0 ${isCurrent ? 'bg-primary' : ''} ${selecting ? 'blur-sm' : ''}`}
       >
         <div ref={setNodeRef} {...attributes} {...listeners} className="w-full h-full">
-          <CardBody className="pb-1">
+          <CardContent className="px-4 pt-2 pb-1">
             <div className="flex justify-between h-[32px]">
               <h3
                 title={info?.name}
@@ -233,49 +221,49 @@ const ProfileItem: React.FC<Props> = (props) => {
               </h3>
               <div className="flex" onClick={(e) => e.stopPropagation()}>
                 {info.type === 'remote' && (
-                  <Tooltip placement="left" content={dayjs(info.updated).fromNow()}>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                      color="default"
-                      disabled={updating}
-                      onPress={async () => {
-                        setUpdating(true)
-                        await addProfileItem(info)
-                        setUpdating(false)
-                      }}
-                    >
-                      <IoMdRefresh
-                        color="default"
-                        className={`${isCurrent ? 'text-primary-foreground' : 'text-foreground'} text-[24px] ${updating ? 'animate-spin' : ''}`}
-                      />
-                    </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon-sm"
+                        variant="ghost"
+                        disabled={updating}
+                        onClick={async () => {
+                          setUpdating(true)
+                          await addProfileItem(info)
+                          setUpdating(false)
+                        }}
+                      >
+                        <IoMdRefresh
+                          className={`${isCurrent ? 'text-primary-foreground' : 'text-foreground'} text-[24px] ${updating ? 'animate-spin' : ''}`}
+                        />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">{dayjs(info.updated).fromNow()}</TooltipContent>
                   </Tooltip>
                 )}
 
-                <Dropdown>
-                  <DropdownTrigger>
-                    <Button isIconOnly size="sm" variant="light" color="default">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="icon-sm" variant="ghost">
                       <IoMdMore
-                        color="default"
                         className={`text-[24px] ${isCurrent ? 'text-primary-foreground' : 'text-foreground'}`}
                       />
                     </Button>
-                  </DropdownTrigger>
-                  <DropdownMenu onAction={onMenuAction}>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
                     {menuItems.map((item) => (
-                      <DropdownItem
-                        showDivider={item.showDivider}
-                        key={item.key}
-                        color={item.color}
-                        className={item.className}
-                      >
-                        {item.label}
-                      </DropdownItem>
+                      <React.Fragment key={item.key}>
+                        <DropdownMenuItem
+                          variant={item.variant}
+                          onClick={() => onMenuAction(item.key)}
+                        >
+                          {item.label}
+                        </DropdownMenuItem>
+                        {item.showDivider && <DropdownMenuSeparator />}
+                      </React.Fragment>
                     ))}
-                  </DropdownMenu>
-                </Dropdown>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
             {info.type === 'remote' && extra && (
@@ -285,10 +273,11 @@ const ProfileItem: React.FC<Props> = (props) => {
                 <small>{`${calcTraffic(usage)}/${calcTraffic(total)}`}</small>
                 {profileDisplayDate === 'expire' ? (
                   <Button
-                    size="sm"
-                    variant="light"
-                    className={`h-[20px] p-1 m-0 ${isCurrent ? 'text-primary-foreground' : 'text-foreground'}`}
-                    onPress={async () => {
+                    size="xs"
+                    variant="ghost"
+                    className={`h-5 px-1 ${isCurrent ? 'text-primary-foreground' : 'text-foreground'}`}
+                    onClick={async (event) => {
+                      event.stopPropagation()
                       await patchAppConfig({ profileDisplayDate: 'update' })
                     }}
                   >
@@ -298,10 +287,11 @@ const ProfileItem: React.FC<Props> = (props) => {
                   </Button>
                 ) : (
                   <Button
-                    size="sm"
-                    variant="light"
-                    className={`h-[20px] p-1 m-0 ${isCurrent ? 'text-primary-foreground' : 'text-foreground'}`}
-                    onPress={async () => {
+                    size="xs"
+                    variant="ghost"
+                    className={`h-5 px-1 ${isCurrent ? 'text-primary-foreground' : 'text-foreground'}`}
+                    onClick={async (event) => {
+                      event.stopPropagation()
                       await patchAppConfig({ profileDisplayDate: 'expire' })
                     }}
                   >
@@ -310,19 +300,18 @@ const ProfileItem: React.FC<Props> = (props) => {
                 )}
               </div>
             )}
-          </CardBody>
-          <CardFooter className="pt-0">
+          </CardContent>
+          <CardFooter className="pt-0 px-4 pb-2">
             {info.type === 'remote' && !extra && (
               <div
                 className={`w-full mt-2 flex justify-between ${isCurrent ? 'text-primary-foreground' : 'text-foreground'}`}
               >
-                <Chip
-                  size="sm"
-                  variant="bordered"
-                  className={`${isCurrent ? 'text-primary-foreground border-primary-foreground' : 'border-primary text-primary'}`}
+                <Badge
+                  variant="outline"
+                  className={`rounded-sm ${isCurrent ? 'text-primary-foreground border-primary-foreground' : 'border-primary text-primary'}`}
                 >
                   {t('common.remote')}
-                </Chip>
+                </Badge>
                 <small>{dayjs(info.updated).fromNow()}</small>
               </div>
             )}
@@ -330,21 +319,17 @@ const ProfileItem: React.FC<Props> = (props) => {
               <div
                 className={`mt-2 flex justify-between ${isCurrent ? 'text-primary-foreground' : 'text-foreground'}`}
               >
-                <Chip
-                  size="sm"
-                  variant="bordered"
-                  className={`${isCurrent ? 'text-primary-foreground border-primary-foreground' : 'border-primary text-primary'}`}
+                <Badge
+                  variant="outline"
+                  className={`rounded-sm ${isCurrent ? 'text-primary-foreground border-primary-foreground' : 'border-primary text-primary'}`}
                 >
                   {t('common.local')}
-                </Chip>
+                </Badge>
               </div>
             )}
             {extra && (
               <Progress
-                className="w-full"
-                classNames={{
-                  indicator: isCurrent ? 'bg-primary-foreground' : 'bg-foreground'
-                }}
+                className={`w-full ${isCurrent ? '[&_[data-slot=progress-indicator]]:bg-primary-foreground' : '[&_[data-slot=progress-indicator]]:bg-foreground'}`}
                 value={calcPercent(extra?.upload, extra?.download, extra?.total)}
               />
             )}

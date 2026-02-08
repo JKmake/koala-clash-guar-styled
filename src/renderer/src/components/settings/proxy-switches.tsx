@@ -1,7 +1,9 @@
-import React, { Key } from 'react'
+import React from 'react'
 import SettingCard from '../base/base-setting-card'
 import SettingItem from '../base/base-setting-item'
-import { Button, Switch, Tab, Tabs } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { restartCore, triggerSysProxy } from '@renderer/utils/ipc'
@@ -24,25 +26,24 @@ const ProxySwitches: React.FC = () => {
     <SettingCard>
       <SettingItem title={t('settings.advanced.mainSwitch')} divider>
         <Tabs
-          size="sm"
-          color="primary"
-          selectedKey={mainSwitchMode}
-          onSelectionChange={(key: Key) => {
-            patchAppConfig({ mainSwitchMode: key as 'tun' | 'sysproxy' })
+          value={mainSwitchMode}
+          onValueChange={(value) => {
+            patchAppConfig({ mainSwitchMode: value as 'tun' | 'sysproxy' })
           }}
         >
-          <Tab key="tun" title={t('settings.advanced.mainSwitchTun')} />
-          <Tab key="sysproxy" title={t('settings.advanced.mainSwitchSysproxy')} />
+          <TabsList className="h-8">
+            <TabsTrigger value="tun">{t('settings.advanced.mainSwitchTun')}</TabsTrigger>
+            <TabsTrigger value="sysproxy">{t('settings.advanced.mainSwitchSysproxy')}</TabsTrigger>
+          </TabsList>
         </Tabs>
       </SettingItem>
       <SettingItem
         title={t('sider.virtualInterface')}
         actions={
           <Button
-            isIconOnly
-            size="sm"
-            variant="light"
-            onPress={() => navigate('/tun')}
+            size="icon-sm"
+            variant="ghost"
+            onClick={() => navigate('/tun')}
           >
             <IoSettings className="text-lg" />
           </Button>
@@ -51,8 +52,8 @@ const ProxySwitches: React.FC = () => {
       >
         <Switch
           size="sm"
-          isSelected={tun?.enable}
-          onValueChange={async (enable: boolean) => {
+          checked={tun?.enable}
+          onCheckedChange={async (enable: boolean) => {
             if (enable) {
               await patchControledMihomoConfig({ tun: { enable }, dns: { enable: true } })
             } else {
@@ -68,10 +69,9 @@ const ProxySwitches: React.FC = () => {
         title={t('sider.systemProxy')}
         actions={
           <Button
-            isIconOnly
-            size="sm"
-            variant="light"
-            onPress={() => navigate('/sysproxy')}
+            size="icon-sm"
+            variant="ghost"
+            onClick={() => navigate('/sysproxy')}
           >
             <IoSettings className="text-lg" />
           </Button>
@@ -79,9 +79,9 @@ const ProxySwitches: React.FC = () => {
       >
         <Switch
           size="sm"
-          isSelected={sysProxyEnable}
-          isDisabled={mode == 'manual' && sysProxyDisabled}
-          onValueChange={async (enable: boolean) => {
+          checked={sysProxyEnable}
+          disabled={mode == 'manual' && sysProxyDisabled}
+          onCheckedChange={async (enable: boolean) => {
             if (mode == 'manual' && sysProxyDisabled) return
             try {
               await triggerSysProxy(enable, onlyActiveDevice)

@@ -1,21 +1,23 @@
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem
-} from '@heroui/react'
 import React from 'react'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@renderer/components/ui/dropdown-menu'
 import SettingItem from '../base/base-setting-item'
 import { calcTraffic } from '@renderer/utils/calc'
 import dayjs from 'dayjs'
 import { BiCopy } from 'react-icons/bi'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { t } from 'i18next'
 
 interface Props {
@@ -104,26 +106,29 @@ const CopyableSettingItem: React.FC<CopyProps> = (props) => {
     <SettingItem
       title={title}
       actions={
-        <Dropdown>
-          <DropdownTrigger>
-            <Button title={t('connection.copyRule')} isIconOnly size="sm" variant="light">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button title={t('connection.copyRule')} size="icon-sm" variant="ghost">
               <BiCopy className="text-lg" />
             </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            onAction={(key) =>
-              navigator.clipboard.writeText(
-                key === 'raw' ? (Array.isArray(value) ? value.join(', ') : value) : (key as string)
-              )
-            }
-          >
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
             {menuItems
               .filter((item) => item !== null)
               .map(({ key, text }) => (
-                <DropdownItem key={key}>{text}</DropdownItem>
+                <DropdownMenuItem
+                  key={key}
+                  onClick={() =>
+                    navigator.clipboard.writeText(
+                      key === 'raw' ? (Array.isArray(value) ? value.join(', ') : value) : key
+                    )
+                  }
+                >
+                  {text}
+                </DropdownMenuItem>
               ))}
-          </DropdownMenu>
-        </Dropdown>
+          </DropdownMenuContent>
+        </DropdownMenu>
       }
     >
       <div className="flex items-center gap-2 truncate">
@@ -137,22 +142,19 @@ const CopyableSettingItem: React.FC<CopyProps> = (props) => {
 
 const ConnectionDetailModal: React.FC<Props> = (props) => {
   const { connection, onClose } = props
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
 
   return (
-    <Modal
-      backdrop={disableAnimation ? 'transparent' : 'blur'}
-      disableAnimation={disableAnimation}
-      classNames={{ backdrop: 'top-[48px]' }}
-      size="xl"
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={onClose}
-      scrollBehavior="inside"
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
     >
-      <ModalContent className="flag-emoji break-all">
-        <ModalHeader className="flex app-drag">{t('connection.connectionDetails')}</ModalHeader>
-        <ModalBody>
+      <DialogContent className="max-w-xl flag-emoji break-all" showCloseButton={false}>
+        <DialogHeader className="app-drag">
+          <DialogTitle>{t('connection.connectionDetails')}</DialogTitle>
+        </DialogHeader>
+        <div className="overflow-y-auto max-h-[60vh] flex flex-col gap-1">
           <SettingItem title={t('connection.connectionEstablished')}>
             <div className="truncate">{dayjs(connection.start).fromNow()}</div>
           </SettingItem>
@@ -331,14 +333,16 @@ const ConnectionDetailModal: React.FC<Props> = (props) => {
               <div className="truncate">{connection.metadata.specialRules}</div>
             </SettingItem>
           )}
-        </ModalBody>
-        <ModalFooter>
-          <Button size="sm" variant="light" onPress={onClose}>
-            {t('common.close')}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button size="sm" variant="ghost">
+              {t('common.close')}
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

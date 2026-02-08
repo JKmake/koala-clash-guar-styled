@@ -1,7 +1,29 @@
 import React, { useState, useEffect } from 'react'
 import SettingCard from '../base/base-setting-card'
 import SettingItem from '../base/base-setting-item'
-import { Button, Input, Select, SelectItem, Switch, Tab, Tabs, Tooltip } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger
+} from '@renderer/components/ui/dropdown-menu'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText
+} from '@renderer/components/ui/input-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import {
   copyEnv,
@@ -14,11 +36,20 @@ import { platform } from '@renderer/utils/init'
 import { IoIosHelpCircle } from 'react-icons/io'
 import { IoSettings } from 'react-icons/io5'
 import { BiCopy } from 'react-icons/bi'
+import { ChevronDownIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import EditableList from '../base/base-list-editor'
 import { useTranslation } from 'react-i18next'
 
 const emptyArray: string[] = []
+type EnvType = 'bash' | 'cmd' | 'powershell' | 'nushell'
+
+const envOptions: Array<{ value: EnvType; label: string }> = [
+  { value: 'bash', label: 'Bash' },
+  { value: 'cmd', label: 'CMD' },
+  { value: 'powershell', label: 'PowerShell' },
+  { value: 'nushell', label: 'NuShell' }
+]
 
 const AdvancedSettings: React.FC = () => {
   const { t } = useTranslation()
@@ -44,29 +75,51 @@ const AdvancedSettings: React.FC = () => {
 
   const [bypass, setBypass] = useState(networkDetectionBypass)
   const [interval, setInterval] = useState(networkDetectionInterval)
+  const envTypeValue = envType as EnvType[]
+  const envTypeLabels = envOptions
+    .filter((option) => envTypeValue.includes(option.value))
+    .map((option) => option.label)
+  const envTypeLabel = envTypeLabels.length ? envTypeLabels.join(', ') : '-'
 
   useEffect(() => {
     setPauseSSIDInput(pauseSSIDArray)
   }, [pauseSSIDArray])
+
+  const handleEnvTypeChange = async (value: EnvType, checked: boolean): Promise<void> => {
+    const next = checked
+      ? Array.from(new Set([...envTypeValue, value]))
+      : envTypeValue.filter((item) => item !== value)
+    if (next.length === 0) return
+    try {
+      await patchAppConfig({
+        envType: next
+      })
+    } catch (e) {
+      alert(e)
+    }
+  }
 
   return (
     <SettingCard title={t('settings.advanced.moreSettings')}>
       <SettingItem
         title={t('settings.advanced.autoEnterLightMode')}
         actions={
-          <Tooltip content={t('settings.advanced.autoEnterLightModeHelp')}>
-            <Button isIconOnly size="sm" variant="light">
-              <IoIosHelpCircle className="text-lg" />
-            </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="icon-sm" variant="ghost">
+                <IoIosHelpCircle className="text-lg" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('settings.advanced.autoEnterLightModeHelp')}</TooltipContent>
           </Tooltip>
         }
         divider
       >
         <Switch
           size="sm"
-          isSelected={autoLightweight}
-          onValueChange={(v) => {
-            patchAppConfig({ autoLightweight: v })
+          checked={autoLightweight}
+          onCheckedChange={(value) => {
+            patchAppConfig({ autoLightweight: value })
           }}
         />
       </SettingItem>
@@ -74,35 +127,37 @@ const AdvancedSettings: React.FC = () => {
         <>
           <SettingItem title={t('settings.advanced.lightModeBehavior')} divider>
             <Tabs
-              size="sm"
-              color="primary"
-              selectedKey={autoLightweightMode}
-              onSelectionChange={(v) => {
-                patchAppConfig({ autoLightweightMode: v as 'core' | 'tray' })
-                if (v === 'core') {
+              value={autoLightweightMode}
+              onValueChange={(value) => {
+                patchAppConfig({ autoLightweightMode: value as 'core' | 'tray' })
+                if (value === 'core') {
                   patchAppConfig({ autoLightweightDelay: Math.max(autoLightweightDelay, 5) })
                 }
               }}
             >
-              <Tab key="core" title={t('settings.advanced.keepCoreOnly')} />
-              <Tab key="tray" title={t('settings.advanced.closeRendererOnly')} />
+              <TabsList className="h-8">
+                <TabsTrigger value="core">{t('settings.advanced.keepCoreOnly')}</TabsTrigger>
+                <TabsTrigger value="tray">{t('settings.advanced.closeRendererOnly')}</TabsTrigger>
+              </TabsList>
             </Tabs>
           </SettingItem>
           <SettingItem title={t('settings.advanced.autoEnterLightModeDelay')} divider>
-            <Input
-              size="sm"
-              className="w-[100px]"
-              type="number"
-              endContent={t('settings.advanced.seconds')}
-              value={autoLightweightDelay.toString()}
-              onValueChange={async (v: string) => {
-                let num = parseInt(v)
-                if (isNaN(num)) num = 0
-                const minDelay = autoLightweightMode === 'core' ? 5 : 0
-                if (num < minDelay) num = minDelay
-                await patchAppConfig({ autoLightweightDelay: num })
-              }}
-            />
+            <InputGroup className="w-[150px] h-8">
+              <InputGroupInput
+                type="number"
+                value={autoLightweightDelay.toString()}
+                onChange={async (event) => {
+                  let num = parseInt(event.target.value)
+                  if (isNaN(num)) num = 0
+                  const minDelay = autoLightweightMode === 'core' ? 5 : 0
+                  if (num < minDelay) num = minDelay
+                  await patchAppConfig({ autoLightweightDelay: num })
+                }}
+              />
+              <InputGroupAddon align="inline-end">
+                <InputGroupText>{t('settings.advanced.seconds')}</InputGroupText>
+              </InputGroupAddon>
+            </InputGroup>
           </SettingItem>
         </>
       )}
@@ -112,51 +167,43 @@ const AdvancedSettings: React.FC = () => {
           <Button
             key={type}
             title={type}
-            isIconOnly
-            size="sm"
-            variant="light"
-            onPress={() => copyEnv(type)}
+            size="icon-sm"
+            variant="ghost"
+            onClick={() => copyEnv(type)}
           >
             <BiCopy className="text-lg" />
           </Button>
         ))}
         divider
       >
-        <Select
-          classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
-          className="w-[150px]"
-          size="sm"
-          selectionMode="multiple"
-          selectedKeys={new Set(envType)}
-          disallowEmptySelection={true}
-          onSelectionChange={async (v) => {
-            try {
-              await patchAppConfig({
-                envType: Array.from(v) as ('bash' | 'cmd' | 'powershell')[]
-              })
-            } catch (e) {
-              alert(e)
-            }
-          }}
-        >
-          <SelectItem key="bash">Bash</SelectItem>
-          <SelectItem key="cmd">CMD</SelectItem>
-          <SelectItem key="powershell">PowerShell</SelectItem>
-          <SelectItem key="nushell">NuShell</SelectItem>
-        </Select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="w-[150px] justify-between">
+              <span className="truncate">{envTypeLabel}</span>
+              <ChevronDownIcon className="size-4 opacity-50" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[150px]">
+            {envOptions.map((option) => (
+              <DropdownMenuCheckboxItem
+                key={option.value}
+                checked={envTypeValue.includes(option.value)}
+                onCheckedChange={(checked) => handleEnvTypeChange(option.value, checked)}
+              >
+                {option.label}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SettingItem>
       {platform === 'win32' && (
         <SettingItem title={t('settings.advanced.corePriority')} divider>
           <Select
-            classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
-            className="w-[150px]"
-            size="sm"
-            selectedKeys={new Set([mihomoCpuPriority])}
-            disallowEmptySelection={true}
-            onSelectionChange={async (v) => {
+            value={mihomoCpuPriority}
+            onValueChange={async (value) => {
               try {
                 await patchAppConfig({
-                  mihomoCpuPriority: v.currentKey as Priority
+                  mihomoCpuPriority: value as Priority
                 })
                 await restartCore()
               } catch (e) {
@@ -164,23 +211,28 @@ const AdvancedSettings: React.FC = () => {
               }
             }}
           >
-            <SelectItem key="PRIORITY_HIGHEST">{t('settings.advanced.realtime')}</SelectItem>
-            <SelectItem key="PRIORITY_HIGH">{t('settings.advanced.high')}</SelectItem>
-            <SelectItem key="PRIORITY_ABOVE_NORMAL">
-              {t('settings.advanced.aboveNormal')}
-            </SelectItem>
-            <SelectItem key="PRIORITY_NORMAL">{t('settings.advanced.normal')}</SelectItem>
-            <SelectItem key="PRIORITY_BELOW_NORMAL">
-              {t('settings.advanced.belowNormal')}
-            </SelectItem>
-            <SelectItem key="PRIORITY_LOW">{t('settings.advanced.low')}</SelectItem>
+            <SelectTrigger size="sm" className="w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PRIORITY_HIGHEST">{t('settings.advanced.realtime')}</SelectItem>
+              <SelectItem value="PRIORITY_HIGH">{t('settings.advanced.high')}</SelectItem>
+              <SelectItem value="PRIORITY_ABOVE_NORMAL">
+                {t('settings.advanced.aboveNormal')}
+              </SelectItem>
+              <SelectItem value="PRIORITY_NORMAL">{t('settings.advanced.normal')}</SelectItem>
+              <SelectItem value="PRIORITY_BELOW_NORMAL">
+                {t('settings.advanced.belowNormal')}
+              </SelectItem>
+              <SelectItem value="PRIORITY_LOW">{t('settings.advanced.low')}</SelectItem>
+            </SelectContent>
           </Select>
         </SettingItem>
       )}
       <SettingItem
         title={t('settings.advanced.takeOverDNS')}
         actions={
-          <Button isIconOnly size="sm" variant="light" onPress={() => navigate('/dns')}>
+          <Button size="icon-sm" variant="ghost" onClick={() => navigate('/dns')}>
             <IoSettings className="text-lg" />
           </Button>
         }
@@ -188,10 +240,10 @@ const AdvancedSettings: React.FC = () => {
       >
         <Switch
           size="sm"
-          isSelected={controlDns}
-          onValueChange={async (v) => {
+          checked={controlDns}
+          onCheckedChange={async (value) => {
             try {
-              await patchAppConfig({ controlDns: v })
+              await patchAppConfig({ controlDns: value })
               await patchControledMihomoConfig({})
               await restartCore()
             } catch (e) {
@@ -203,7 +255,7 @@ const AdvancedSettings: React.FC = () => {
       <SettingItem
         title={t('settings.advanced.takeOverSniffer')}
         actions={
-          <Button isIconOnly size="sm" variant="light" onPress={() => navigate('/sniffer')}>
+          <Button size="icon-sm" variant="ghost" onClick={() => navigate('/sniffer')}>
             <IoSettings className="text-lg" />
           </Button>
         }
@@ -211,10 +263,10 @@ const AdvancedSettings: React.FC = () => {
       >
         <Switch
           size="sm"
-          isSelected={controlSniff}
-          onValueChange={async (v) => {
+          checked={controlSniff}
+          onCheckedChange={async (value) => {
             try {
-              await patchAppConfig({ controlSniff: v })
+              await patchAppConfig({ controlSniff: value })
               await patchControledMihomoConfig({})
               await restartCore()
             } catch (e) {
@@ -226,20 +278,23 @@ const AdvancedSettings: React.FC = () => {
       <SettingItem
         title={t('settings.advanced.stopCoreOnDisconnect')}
         actions={
-          <Tooltip content={t('settings.advanced.stopCoreOnDisconnectHelp')}>
-            <Button isIconOnly size="sm" variant="light">
-              <IoIosHelpCircle className="text-lg" />
-            </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="icon-sm" variant="ghost">
+                <IoIosHelpCircle className="text-lg" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('settings.advanced.stopCoreOnDisconnectHelp')}</TooltipContent>
           </Tooltip>
         }
         divider
       >
         <Switch
           size="sm"
-          isSelected={networkDetection}
-          onValueChange={(v) => {
-            patchAppConfig({ networkDetection: v })
-            if (v) {
+          checked={networkDetection}
+          onCheckedChange={(value) => {
+            patchAppConfig({ networkDetection: value })
+            if (value) {
               startNetworkDetection()
             } else {
               stopNetworkDetection()
@@ -250,13 +305,12 @@ const AdvancedSettings: React.FC = () => {
       {networkDetection && (
         <>
           <SettingItem title={t('settings.advanced.disconnectDetectInterval')} divider>
-            <div className="flex">
+            <div className="flex items-center">
               {interval !== networkDetectionInterval && (
                 <Button
                   size="sm"
-                  color="primary"
                   className="mr-2"
-                  onPress={async () => {
+                  onClick={async () => {
                     await patchAppConfig({ networkDetectionInterval: interval })
                     await startNetworkDetection()
                   }}
@@ -264,25 +318,26 @@ const AdvancedSettings: React.FC = () => {
                   {t('common.confirm')}
                 </Button>
               )}
-              <Input
-                size="sm"
-                type="number"
-                className="w-[100px]"
-                endContent={t('settings.advanced.seconds')}
-                value={interval.toString()}
-                min={1}
-                onValueChange={(v) => {
-                  setInterval(parseInt(v))
-                }}
-              />
+              <InputGroup className="w-[150px] h-8">
+                <InputGroupInput
+                  type="number"
+                  value={interval.toString()}
+                  min={1}
+                  onChange={(event) => {
+                    setInterval(parseInt(event.target.value))
+                  }}
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupText>{t('settings.advanced.seconds')}</InputGroupText>
+                </InputGroupAddon>
+              </InputGroup>
             </div>
           </SettingItem>
           <SettingItem title={t('settings.advanced.bypassDetectInterfaces')}>
             {bypass.length != networkDetectionBypass.length && (
               <Button
                 size="sm"
-                color="primary"
-                onPress={async () => {
+                onClick={async () => {
                   await patchAppConfig({ networkDetectionBypass: bypass })
                   await startNetworkDetection()
                 }}
@@ -298,8 +353,7 @@ const AdvancedSettings: React.FC = () => {
         {pauseSSIDInput.join('') !== pauseSSIDArray.join('') && (
           <Button
             size="sm"
-            color="primary"
-            onPress={() => {
+            onClick={() => {
               patchAppConfig({ pauseSSID: pauseSSIDInput })
             }}
           >

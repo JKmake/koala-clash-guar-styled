@@ -1,5 +1,4 @@
 import { Button } from '@renderer/components/ui/button'
-import { Separator } from '@renderer/components/ui/separator'
 import { cn } from '@renderer/lib/utils'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { platform } from '@renderer/utils/init'
@@ -46,7 +45,7 @@ const BasePage = forwardRef<HTMLDivElement, Props>((props, ref) => {
 
   return (
     <div ref={contentRef} className="w-full h-full">
-      <div className="sticky top-0 z-40 h-[49px] w-full bg-background">
+      <div className="sticky top-0 z-40 h-[49px] w-full">
         <div className="app-drag p-2 flex justify-between h-[48px]">
           <div className="title h-full text-lg leading-[32px]">{props.title}</div>
           <div style={{ marginRight: overlayWidth }} className="header flex gap-1 h-full">
@@ -69,8 +68,6 @@ const BasePage = forwardRef<HTMLDivElement, Props>((props, ref) => {
             </Button>
           </div>
         </div>
-
-        <Separator />
       </div>
       <div className="content h-[calc(100vh-49px)] overflow-y-auto custom-scrollbar">
         {props.children}

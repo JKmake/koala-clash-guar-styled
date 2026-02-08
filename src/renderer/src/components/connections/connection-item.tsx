@@ -1,4 +1,7 @@
-import { Avatar, Button, Card, CardFooter, CardHeader, Chip } from '@heroui/react'
+import { Avatar, AvatarImage } from '@renderer/components/ui/avatar'
+import { Badge } from '@renderer/components/ui/badge'
+import { Button } from '@renderer/components/ui/button'
+import { Card, CardFooter, CardHeader } from '@renderer/components/ui/card'
 import { calcTraffic } from '@renderer/utils/calc'
 import dayjs from 'dayjs'
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react'
@@ -86,64 +89,58 @@ const ConnectionItemComponent: React.FC<Props> = ({
 
   return (
     <div className={`px-2 pb-2 ${index === 0 ? 'pt-2' : ''}`} style={{ minHeight: 80 }}>
-      <Card as="div" isPressable className="w-full" onPress={handleCardPress}>
+      <Card
+        className="w-full cursor-pointer py-0 gap-0 hover:bg-accent/50 transition-colors"
+        onClick={handleCardPress}
+      >
         <div className="w-full flex justify-between items-center">
           {displayIcon && (
             <div>
-              <Avatar
-                size="lg"
-                radius="sm"
-                src={iconUrl}
-                className="bg-transparent ml-2 w-14 h-14"
-              />
+              <Avatar size="lg" className="bg-transparent ml-2 w-14 h-14 rounded-sm">
+                <AvatarImage src={iconUrl} />
+              </Avatar>
             </div>
           )}
           <div
             className={`w-full flex flex-col justify-start truncate relative ${displayIcon ? '-ml-2' : ''}`}
           >
-            <CardHeader className="pb-0 gap-1 flex items-center pr-12 relative">
+            <CardHeader className="pb-0 gap-1 flex items-center pr-12 relative px-4 py-2">
               <div className="ml-2 flex-1 text-ellipsis whitespace-nowrap overflow-hidden text-left">
                 <span style={{ textAlign: 'left' }}>
                   {processName} → {destination}
                 </span>
               </div>
-              <small className="ml-2 whitespace-nowrap text-foreground-500">{timeAgo}</small>
+              <small className="ml-2 whitespace-nowrap text-muted-foreground">{timeAgo}</small>
               <Button
-                color={info.isActive ? 'warning' : 'danger'}
-                variant="light"
-                isIconOnly
-                size="sm"
-                className="absolute right-2 transform"
-                onPress={handleClose}
+                variant="ghost"
+                size="icon-sm"
+                className={`absolute right-2 ${info.isActive ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-500/10' : 'text-destructive hover:text-destructive hover:bg-destructive/10'}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleClose()
+                }}
               >
                 {info.isActive ? <CgClose className="text-lg" /> : <CgTrash className="text-lg" />}
               </Button>
             </CardHeader>
-            <CardFooter className="pt-2">
+            <CardFooter className="pt-2 px-4 pb-2">
               <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                <Chip
-                  color={info.isActive ? 'primary' : 'danger'}
-                  size="sm"
-                  radius="sm"
-                  variant="dot"
-                >
+                <Badge variant="outline" className="rounded-sm gap-1.5">
+                  <span
+                    className={`size-1.5 rounded-full ${info.isActive ? 'bg-primary' : 'bg-destructive'}`}
+                  />
                   {info.metadata.type}({info.metadata.network.toUpperCase()})
-                </Chip>
-                <Chip
-                  className="flag-emoji whitespace-nowrap overflow-hidden"
-                  size="sm"
-                  radius="sm"
-                  variant="bordered"
-                >
+                </Badge>
+                <Badge variant="outline" className="flag-emoji whitespace-nowrap overflow-hidden rounded-sm">
                   {info.chains[0]}
-                </Chip>
-                <Chip size="sm" radius="sm" variant="bordered">
+                </Badge>
+                <Badge variant="outline" className="rounded-sm">
                   ↑ {uploadTraffic} ↓ {downloadTraffic}
-                </Chip>
+                </Badge>
                 {hasSpeed && (
-                  <Chip color="primary" size="sm" radius="sm" variant="bordered">
+                  <Badge variant="outline" className="rounded-sm border-primary/50 text-primary">
                     ↑ {uploadSpeed || '0 B'}/s ↓ {downloadSpeed || '0 B'}/s
-                  </Chip>
+                  </Badge>
                 )}
               </div>
             </CardFooter>

@@ -1,12 +1,6 @@
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Switch
-} from '@heroui/react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import { Switch } from '@renderer/components/ui/switch'
 import React, { useEffect, useState, useCallback } from 'react'
 import { BaseEditor } from '../base/base-editor-lazy'
 import {
@@ -16,14 +10,12 @@ import {
   getCurrentProfileStr
 } from '@renderer/utils/ipc'
 import useSWR from 'swr'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { t } from 'i18next'
 
 interface Props {
   onClose: () => void
 }
 const ConfigViewer: React.FC<Props> = ({ onClose }) => {
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
   const [runtimeConfig, setRuntimeConfig] = useState('')
   const [rawProfile, setRawProfile] = useState('')
   const [profileConfig, setProfileConfig] = useState('')
@@ -44,22 +36,12 @@ const ConfigViewer: React.FC<Props> = ({ onClose }) => {
   }, [fetchConfigs])
 
   return (
-    <Modal
-      backdrop={disableAnimation ? 'transparent' : 'blur'}
-      disableAnimation={disableAnimation}
-      classNames={{
-        base: 'max-w-none w-full',
-        backdrop: 'top-[48px]'
-      }}
-      size="5xl"
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={onClose}
-      scrollBehavior="inside"
-    >
-      <ModalContent className="h-full w-[calc(100%-100px)]">
-        <ModalHeader className="flex pb-0 app-drag">{t('sider.runtimeConfigTitle')}</ModalHeader>
-        <ModalBody className="h-full">
+    <Dialog open={true} onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="max-w-5xl h-[80vh] flex flex-col" showCloseButton={false}>
+        <DialogHeader className="app-drag">
+          <DialogTitle>{t('sider.runtimeConfigTitle')}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 min-h-0">
           <BaseEditor
             language="yaml"
             value={runtimeConfig}
@@ -69,31 +51,28 @@ const ConfigViewer: React.FC<Props> = ({ onClose }) => {
             readOnly
             diffRenderSideBySide={sideBySide}
           />
-        </ModalBody>
-        <ModalFooter className="pt-0 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Switch size="sm" isSelected={isDiff} onValueChange={setIsDiff}>
-              {t('sider.compareCurrentConfig')}
-            </Switch>
-            <Switch size="sm" isSelected={sideBySide} onValueChange={setSideBySide}>
-              {t('sider.sideBySide')}
-            </Switch>
-            <Switch
-              size="sm"
-              isSelected={isRaw}
-              onValueChange={(value) => {
-                setIsRaw(value)
-              }}
-            >
-              {t('sider.showRawText')}
-            </Switch>
+        </div>
+        <DialogFooter className="flex items-center justify-between sm:justify-between">
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center space-x-2 text-sm">
+              <Switch size="sm" checked={isDiff} onCheckedChange={setIsDiff} />
+              <span>{t('sider.compareCurrentConfig')}</span>
+            </label>
+            <label className="flex items-center space-x-2 text-sm">
+              <Switch size="sm" checked={sideBySide} onCheckedChange={setSideBySide} />
+              <span>{t('sider.sideBySide')}</span>
+            </label>
+            <label className="flex items-center space-x-2 text-sm">
+              <Switch size="sm" checked={isRaw} onCheckedChange={setIsRaw} />
+              <span>{t('sider.showRawText')}</span>
+            </label>
           </div>
-          <Button size="sm" variant="light" onPress={onClose}>
+          <Button size="sm" variant="ghost" onClick={onClose}>
             {t('common.close')}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

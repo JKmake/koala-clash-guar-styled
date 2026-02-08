@@ -1,17 +1,21 @@
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Switch,
-  Input,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import { Switch } from '@renderer/components/ui/switch'
+import { Input } from '@renderer/components/ui/input'
+import {
   Select,
+  SelectContent,
   SelectItem,
-  Tab,
-  Tabs
-} from '@heroui/react'
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import React, { useState, useEffect } from 'react'
 import SettingItem from '../base/base-setting-item'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
@@ -48,137 +52,138 @@ const ProxySettingModal: React.FC<Props> = (props) => {
   }, [delayTestUrl])
 
   return (
-    <Modal
-      backdrop="blur"
-      classNames={{ backdrop: 'top-[48px]' }}
-      size="xl"
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={onClose}
-      scrollBehavior="inside"
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
     >
-      <ModalContent className="flag-emoji">
-        <ModalHeader className="flex pb-0">{t('pages.proxies.proxyGroupSettings')}</ModalHeader>
-        <ModalBody className="py-2 gap-1">
+      <DialogContent
+        className="flag-emoji sm:max-w-xl max-h-[calc(100vh-120px)] flex flex-col min-h-0"
+        showCloseButton={false}
+      >
+        <DialogHeader className="pb-0">
+          <DialogTitle>{t('pages.proxies.proxyGroupSettings')}</DialogTitle>
+        </DialogHeader>
+        <div className="py-2 flex flex-col gap-1 overflow-y-auto min-h-0">
           <SettingItem title={t('proxies.proxyNodeColumns')} divider>
             <Select
-              classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
-              className="w-[150px]"
-              size="sm"
-              selectedKeys={new Set([proxyCols])}
-              disallowEmptySelection={true}
-              onSelectionChange={async (v) => {
-                await patchAppConfig({ proxyCols: v.currentKey as 'auto' | '1' | '2' | '3' | '4' })
+              value={proxyCols}
+              onValueChange={async (value) => {
+                await patchAppConfig({ proxyCols: value as 'auto' | '1' | '2' | '3' | '4' })
               }}
             >
-              <SelectItem key="auto">{t('proxies.proxyColsAuto')}</SelectItem>
-              <SelectItem key="1">{t('proxies.proxyCols1')}</SelectItem>
-              <SelectItem key="2">{t('proxies.proxyCols2')}</SelectItem>
-              <SelectItem key="3">{t('proxies.proxyCols3')}</SelectItem>
-              <SelectItem key="4">{t('proxies.proxyCols4')}</SelectItem>
+              <SelectTrigger size="sm" className="w-[150px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">{t('proxies.proxyColsAuto')}</SelectItem>
+                <SelectItem value="1">{t('proxies.proxyCols1')}</SelectItem>
+                <SelectItem value="2">{t('proxies.proxyCols2')}</SelectItem>
+                <SelectItem value="3">{t('proxies.proxyCols3')}</SelectItem>
+                <SelectItem value="4">{t('proxies.proxyCols4')}</SelectItem>
+              </SelectContent>
             </Select>
           </SettingItem>
           <SettingItem title={t('proxies.nodeSortMethod')} divider>
             <Tabs
-              size="sm"
-              color="primary"
-              selectedKey={proxyDisplayOrder}
-              onSelectionChange={async (v) => {
+              value={proxyDisplayOrder}
+              onValueChange={async (value) => {
                 await patchAppConfig({
-                  proxyDisplayOrder: v as 'default' | 'delay' | 'name'
+                  proxyDisplayOrder: value as 'default' | 'delay' | 'name'
                 })
               }}
             >
-              <Tab key="default" title={t('proxies.sortDefault')} />
-              <Tab key="delay" title={t('proxies.sortDelay')} />
-              <Tab key="name" title={t('proxies.sortName')} />
+              <TabsList className="h-8">
+                <TabsTrigger value="default">{t('proxies.sortDefault')}</TabsTrigger>
+                <TabsTrigger value="delay">{t('proxies.sortDelay')}</TabsTrigger>
+                <TabsTrigger value="name">{t('proxies.sortName')}</TabsTrigger>
+              </TabsList>
             </Tabs>
           </SettingItem>
           <SettingItem title={t('proxies.proxyGroupDetails')} divider>
             <Tabs
-              size="sm"
-              color="primary"
-              selectedKey={groupDisplayLayout}
-              onSelectionChange={async (v) => {
+              value={groupDisplayLayout}
+              onValueChange={async (value) => {
                 await patchAppConfig({
-                  groupDisplayLayout: v as 'hidden' | 'single' | 'double'
+                  groupDisplayLayout: value as 'hidden' | 'single' | 'double'
                 })
               }}
             >
-              <Tab key="hidden" title={t('proxies.displayHidden')} />
-              <Tab key="single" title={t('proxies.displaySingle')} />
-              <Tab key="double" title={t('proxies.displayDouble')} />
+              <TabsList className="h-8">
+                <TabsTrigger value="hidden">{t('proxies.displayHidden')}</TabsTrigger>
+                <TabsTrigger value="single">{t('proxies.displaySingle')}</TabsTrigger>
+                <TabsTrigger value="double">{t('proxies.displayDouble')}</TabsTrigger>
+              </TabsList>
             </Tabs>
           </SettingItem>
           <SettingItem title={t('proxies.proxyNodeDetails')} divider>
             <Tabs
-              size="sm"
-              color="primary"
-              selectedKey={proxyDisplayLayout}
-              onSelectionChange={async (v) => {
+              value={proxyDisplayLayout}
+              onValueChange={async (value) => {
                 await patchAppConfig({
-                  proxyDisplayLayout: v as 'hidden' | 'single' | 'double'
+                  proxyDisplayLayout: value as 'hidden' | 'single' | 'double'
                 })
               }}
             >
-              <Tab key="hidden" title={t('proxies.displayHidden')} />
-              <Tab key="single" title={t('proxies.displaySingle')} />
-              <Tab key="double" title={t('proxies.displayDouble')} />
+              <TabsList className="h-8">
+                <TabsTrigger value="hidden">{t('proxies.displayHidden')}</TabsTrigger>
+                <TabsTrigger value="single">{t('proxies.displaySingle')}</TabsTrigger>
+                <TabsTrigger value="double">{t('proxies.displayDouble')}</TabsTrigger>
+              </TabsList>
             </Tabs>
           </SettingItem>
           <SettingItem title={t('proxies.disconnectOnSwitch')} divider>
             <Switch
               size="sm"
-              isSelected={autoCloseConnection}
-              onValueChange={(v) => {
-                patchAppConfig({ autoCloseConnection: v })
+              checked={autoCloseConnection}
+              onCheckedChange={(value) => {
+                patchAppConfig({ autoCloseConnection: value })
               }}
             />
           </SettingItem>
           <SettingItem title={t('proxies.delayTestUrl')} divider>
             <Input
-              size="sm"
-              className="w-[60%]"
+              className="w-[60%] h-8"
               value={url}
               placeholder={t('proxies.delayTestUrlPlaceholder')}
-              onValueChange={(v) => {
-                setUrl(v)
-                setUrlDebounce(v)
+              onChange={(event) => {
+                const value = event.target.value
+                setUrl(value)
+                setUrlDebounce(value)
               }}
             />
           </SettingItem>
           <SettingItem title={t('proxies.delayTestConcurrency')} divider>
             <Input
               type="number"
-              size="sm"
-              className="w-[100px]"
-              value={delayTestConcurrency?.toString()}
+              className="w-[100px] h-8"
+              value={delayTestConcurrency?.toString() ?? ''}
               placeholder={t('proxies.delayTestConcurrencyPlaceholder')}
-              onValueChange={(v) => {
-                patchAppConfig({ delayTestConcurrency: parseInt(v) })
+              onChange={(event) => {
+                patchAppConfig({ delayTestConcurrency: parseInt(event.target.value) })
               }}
             />
           </SettingItem>
           <SettingItem title={t('proxies.delayTestTimeout')}>
             <Input
               type="number"
-              size="sm"
-              className="w-[100px]"
-              value={delayTestTimeout?.toString()}
+              className="w-[100px] h-8"
+              value={delayTestTimeout?.toString() ?? ''}
               placeholder={t('proxies.delayTestTimeoutPlaceholder')}
-              onValueChange={(v) => {
-                patchAppConfig({ delayTestTimeout: parseInt(v) })
+              onChange={(event) => {
+                patchAppConfig({ delayTestTimeout: parseInt(event.target.value) })
               }}
             />
           </SettingItem>
-        </ModalBody>
-        <ModalFooter>
-          <Button size="sm" variant="light" onPress={onClose}>
+        </div>
+        <DialogFooter>
+          <Button size="sm" variant="ghost" onClick={onClose}>
             {t('common.close')}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

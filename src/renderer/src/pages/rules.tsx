@@ -4,14 +4,18 @@ import { Virtuoso } from 'react-virtuoso'
 import { useMemo, useState } from 'react'
 import { Separator } from '@renderer/components/ui/separator'
 import { Input } from '@renderer/components/ui/input'
+import { Button } from '@renderer/components/ui/button'
 import { useRules } from '@renderer/hooks/use-rules'
 import { includesIgnoreCase } from '@renderer/utils/includes'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
+import { RiDatabase2Line } from 'react-icons/ri'
 
 const Rules: React.FC = () => {
   const { t } = useTranslation()
   const { rules } = useRules()
   const [filter, setFilter] = useState('')
+  const navigate = useNavigate()
 
   const filteredRules = useMemo(() => {
     if (!rules) return []
@@ -26,7 +30,20 @@ const Rules: React.FC = () => {
   }, [rules, filter])
 
   return (
-    <BasePage title={t('pages.rules.title')}>
+    <BasePage
+      title={t('pages.rules.title')}
+      header={
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          className="app-nodrag"
+          title={t('pages.resources.title')}
+          onClick={() => navigate('/resources')}
+        >
+          <RiDatabase2Line className="text-lg" />
+        </Button>
+      }
+    >
       <div className="sticky top-0 z-40">
         <div className="flex p-2">
           <Input

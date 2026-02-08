@@ -1,5 +1,5 @@
 import { Button } from '@renderer/components/ui/button'
-import { Input } from '@renderer/components/ui/input'
+import { Kbd, KbdGroup } from '@renderer/components/ui/kbd'
 import { useTranslation } from 'react-i18next'
 import SettingCard from '../base/base-setting-card'
 import SettingItem from '../base/base-setting-item'
@@ -44,6 +44,7 @@ const keyMap = {
 const ShortcutConfig: React.FC = () => {
   const { t } = useTranslation()
   const { appConfig, patchAppConfig } = useAppConfig()
+  const [activeAction, setActiveAction] = useState<string | null>(null)
   const {
     showWindowShortcut = '',
     showFloatingWindowShortcut = '',
@@ -64,6 +65,8 @@ const ShortcutConfig: React.FC = () => {
             value={showWindowShortcut}
             patchAppConfig={patchAppConfig}
             action="showWindowShortcut"
+            activeAction={activeAction}
+            setActiveAction={setActiveAction}
           />
         </div>
       </SettingItem>
@@ -73,6 +76,8 @@ const ShortcutConfig: React.FC = () => {
             value={showFloatingWindowShortcut}
             patchAppConfig={patchAppConfig}
             action="showFloatingWindowShortcut"
+            activeAction={activeAction}
+            setActiveAction={setActiveAction}
           />
         </div>
       </SettingItem>
@@ -82,6 +87,8 @@ const ShortcutConfig: React.FC = () => {
             value={triggerSysProxyShortcut}
             patchAppConfig={patchAppConfig}
             action="triggerSysProxyShortcut"
+            activeAction={activeAction}
+            setActiveAction={setActiveAction}
           />
         </div>
       </SettingItem>
@@ -91,6 +98,8 @@ const ShortcutConfig: React.FC = () => {
             value={triggerTunShortcut}
             patchAppConfig={patchAppConfig}
             action="triggerTunShortcut"
+            activeAction={activeAction}
+            setActiveAction={setActiveAction}
           />
         </div>
       </SettingItem>
@@ -100,6 +109,8 @@ const ShortcutConfig: React.FC = () => {
             value={ruleModeShortcut}
             patchAppConfig={patchAppConfig}
             action="ruleModeShortcut"
+            activeAction={activeAction}
+            setActiveAction={setActiveAction}
           />
         </div>
       </SettingItem>
@@ -109,6 +120,8 @@ const ShortcutConfig: React.FC = () => {
             value={globalModeShortcut}
             patchAppConfig={patchAppConfig}
             action="globalModeShortcut"
+            activeAction={activeAction}
+            setActiveAction={setActiveAction}
           />
         </div>
       </SettingItem>
@@ -118,6 +131,8 @@ const ShortcutConfig: React.FC = () => {
             value={directModeShortcut}
             patchAppConfig={patchAppConfig}
             action="directModeShortcut"
+            activeAction={activeAction}
+            setActiveAction={setActiveAction}
           />
         </div>
       </SettingItem>
@@ -127,6 +142,8 @@ const ShortcutConfig: React.FC = () => {
             value={quitWithoutCoreShortcut}
             patchAppConfig={patchAppConfig}
             action="quitWithoutCoreShortcut"
+            activeAction={activeAction}
+            setActiveAction={setActiveAction}
           />
         </div>
       </SettingItem>
@@ -136,6 +153,8 @@ const ShortcutConfig: React.FC = () => {
             value={restartAppShortcut}
             patchAppConfig={patchAppConfig}
             action="restartAppShortcut"
+            activeAction={activeAction}
+            setActiveAction={setActiveAction}
           />
         </div>
       </SettingItem>
@@ -147,17 +166,27 @@ const ShortcutInput: React.FC<{
   value: string
   action: string
   patchAppConfig: (value: Partial<AppConfig>) => Promise<void>
+  activeAction: string | null
+  setActiveAction: (action: string) => void
 }> = (props) => {
   const { t } = useTranslation()
-  const { value, action, patchAppConfig } = props
+  const { value, action, patchAppConfig, activeAction, setActiveAction } = props
   const [inputValue, setInputValue] = useState(value)
+  const [isFocused, setIsFocused] = useState(false)
+  const displayKeys = inputValue.split('+').filter(Boolean)
 
   useEffect(() => {
     setInputValue(value)
   }, [value])
 
+  useEffect(() => {
+    if (activeAction && activeAction !== action && inputValue !== value) {
+      setInputValue(value)
+    }
+  }, [activeAction, action, inputValue, value])
+
   const parseShortcut = (
-    event: KeyboardEvent,
+    event: KeyboardEvent<HTMLElement>,
     setKey: { (value: React.SetStateAction<string>): void; (arg0: string): void }
   ): void => {
     event.preventDefault()
@@ -227,15 +256,32 @@ const ShortcutInput: React.FC<{
           {t('settings.shortcuts.confirm')}
         </Button>
       )}
-      <Input
-        placeholder={t('settings.shortcuts.clickToInput')}
-        onKeyDown={(e: KeyboardEvent<HTMLInputElement>): void => {
-          parseShortcut(e as unknown as KeyboardEvent, setInputValue)
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className={`w-[calc(100%-72px)] h-8 justify-start gap-1 font-normal ${isFocused ? 'ring-2 ring-ring/50 ring-offset-2 ring-offset-background' : ''}`}
+        onKeyDown={(e: KeyboardEvent<HTMLButtonElement>): void => {
+          parseShortcut(e, setInputValue)
         }}
-        value={inputValue}
-        readOnly
-        className="w-[calc(100%-72px)] h-8 text-sm pr-0"
-      />
+        onFocus={() => {
+          setIsFocused(true)
+          setActiveAction(action)
+        }}
+        onBlur={() => setIsFocused(false)}
+      >
+        {displayKeys.length > 0 ? (
+          <KbdGroup>
+            {displayKeys.map((key, index) => (
+              <Kbd key={`${key}-${index}`}>{key}</Kbd>
+            ))}
+          </KbdGroup>
+        ) : (
+          <span className="text-muted-foreground text-sm">
+            {t('settings.shortcuts.clickToInput')}
+          </span>
+        )}
+      </Button>
     </>
   )
 }

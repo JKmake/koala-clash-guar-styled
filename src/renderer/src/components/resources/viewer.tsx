@@ -1,9 +1,15 @@
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from '@heroui/react'
 import React, { useEffect, useState, useMemo } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
 import { BaseEditor } from '../base/base-editor-lazy'
 import { getFileStr, setFileStr, convertMrsRuleset, getRuntimeConfig } from '@renderer/utils/ipc'
 import yaml from 'js-yaml'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { t } from 'i18next'
 type Language = 'yaml' | 'javascript' | 'css' | 'json' | 'text'
 
@@ -18,7 +24,6 @@ interface Props {
 }
 const Viewer: React.FC<Props> = (props) => {
   const { type, path, title, format, privderType, behavior, onClose } = props
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
   const [currData, setCurrData] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
@@ -98,22 +103,20 @@ const Viewer: React.FC<Props> = (props) => {
   }, [path, type, title, format, privderType, behavior])
 
   return (
-    <Modal
-      backdrop={disableAnimation ? 'transparent' : 'blur'}
-      disableAnimation={disableAnimation}
-      classNames={{
-        base: 'max-w-none w-full',
-        backdrop: 'top-[48px]'
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
       }}
-      size="5xl"
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={onClose}
-      scrollBehavior="inside"
     >
-      <ModalContent className="h-full w-[calc(100%-100px)]">
-        <ModalHeader className="flex pb-0 app-drag">{title}</ModalHeader>
-        <ModalBody className="h-full">
+      <DialogContent
+        className="h-full w-[calc(100%-100px)] max-w-none sm:max-w-none flex flex-col"
+        showCloseButton={false}
+      >
+        <DialogHeader className="app-drag pb-0">
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 min-h-0">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-foreground-500">{t('common.loading')}</div>
@@ -126,16 +129,15 @@ const Viewer: React.FC<Props> = (props) => {
               onChange={(value) => setCurrData(value)}
             />
           )}
-        </ModalBody>
-        <ModalFooter className="pt-0">
-          <Button size="sm" variant="light" onPress={onClose}>
+        </div>
+        <DialogFooter className="pt-0">
+          <Button size="sm" variant="ghost" onClick={onClose}>
             {t('common.close')}
           </Button>
           {type === 'File' && format !== 'MrsRule' && (
             <Button
               size="sm"
-              color="primary"
-              onPress={async () => {
+              onClick={async () => {
                 await setFileStr(path, currData)
                 onClose()
               }}
@@ -143,9 +145,9 @@ const Viewer: React.FC<Props> = (props) => {
               {t('common.save')}
             </Button>
           )}
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

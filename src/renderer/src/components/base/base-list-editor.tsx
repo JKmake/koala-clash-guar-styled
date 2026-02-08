@@ -1,5 +1,8 @@
 import React from 'react'
-import { Button, Divider, Input, Tooltip } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import { Input } from '@renderer/components/ui/input'
+import { Separator } from '@renderer/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import { MdDeleteForever } from 'react-icons/md'
 import type { ValidationResult } from '@renderer/utils/validate'
 import { useTranslation } from 'react-i18next'
@@ -87,8 +90,7 @@ const EditableList: React.FC<EditableListProps> = ({
       const result: Record<string, string[]> = {}
       processedItems.forEach((item) => {
         if (item.part1.trim()) {
-          const values = item.part2 ? item.part2.split(',').map((s) => s.trim()) : []
-          result[item.part1] = values
+          result[item.part1] = item.part2 ? item.part2.split(',').map((s) => s.trim()) : []
         }
       })
       onChange(result)
@@ -165,77 +167,65 @@ const EditableList: React.FC<EditableListProps> = ({
               {isDual || objectMode ? (
                 <>
                   <div className="w-1/3">
-                    <Tooltip
-                      content={part1Error ?? formatErrorText}
-                      placement="left"
-                      isOpen={!part1Valid}
-                      showArrow={true}
-                      color="danger"
-                      offset={10}
-                    >
-                      <Input
-                        size="sm"
-                        fullWidth
-                        className={
-                          part1Valid ? '' : 'border-red-500 ring-1 ring-red-500 rounded-lg'
-                        }
-                        disabled={disabled}
-                        placeholder={placeholder}
-                        value={entry.part1}
-                        onValueChange={(v) => handleUpdate(idx, v, entry.part2)}
-                      />
+                    <Tooltip open={!part1Valid}>
+                      <TooltipTrigger asChild>
+                        <Input
+                          className={
+                            part1Valid ? 'h-8' : 'h-8 border-red-500 ring-1 ring-red-500 rounded-lg'
+                          }
+                          disabled={disabled}
+                          placeholder={placeholder}
+                          value={entry.part1}
+                          onChange={(e) => handleUpdate(idx, e.target.value, entry.part2)}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="left" sideOffset={10} className="bg-destructive text-destructive-foreground">
+                        {part1Error ?? formatErrorText}
+                      </TooltipContent>
                     </Tooltip>
                   </div>
                   <span className="mx-1">:</span>
                   <div className="flex-1">
-                    <Tooltip
-                      content={part2Error ?? formatErrorText}
-                      placement="left"
-                      isOpen={!part2Valid}
-                      showArrow={true}
-                      color="danger"
-                      offset={10}
-                    >
-                      <Input
-                        size="sm"
-                        fullWidth
-                        className={
-                          part2Valid ? '' : 'border-red-500 ring-1 ring-red-500 rounded-lg'
-                        }
-                        disabled={disabled}
-                        placeholder={part2Placeholder}
-                        value={entry.part2 || ''}
-                        onValueChange={(v) => handleUpdate(idx, entry.part1, v)}
-                      />
+                    <Tooltip open={!part2Valid}>
+                      <TooltipTrigger asChild>
+                        <Input
+                          className={
+                            part2Valid ? 'h-8' : 'h-8 border-red-500 ring-1 ring-red-500 rounded-lg'
+                          }
+                          disabled={disabled}
+                          placeholder={part2Placeholder}
+                          value={entry.part2 || ''}
+                          onChange={(e) => handleUpdate(idx, entry.part1, e.target.value)}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="left" sideOffset={10} className="bg-destructive text-destructive-foreground">
+                        {part2Error ?? formatErrorText}
+                      </TooltipContent>
                     </Tooltip>
                   </div>
                 </>
               ) : (
-                <Tooltip
-                  content={part1Error ?? formatErrorText}
-                  placement="left"
-                  isOpen={!part1Valid}
-                  showArrow={true}
-                  color="danger"
-                  offset={10}
-                >
-                  <Input
-                    size="sm"
-                    fullWidth
-                    className={part1Valid ? '' : 'border-red-500 ring-1 ring-red-500 rounded-lg'}
-                    disabled={disabled}
-                    placeholder={placeholder}
-                    value={entry.part1}
-                    onValueChange={(v) => handleUpdate(idx, v)}
-                  />
+                <Tooltip open={!part1Valid}>
+                  <TooltipTrigger asChild>
+                    <Input
+                      className={part1Valid ? 'h-8' : 'h-8 border-red-500 ring-1 ring-red-500 rounded-lg'}
+                      disabled={disabled}
+                      placeholder={placeholder}
+                      value={entry.part1}
+                      onChange={(e) => handleUpdate(idx, e.target.value)}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="left" sideOffset={10} className="bg-destructive text-destructive-foreground">
+                    {part1Error ?? formatErrorText}
+                  </TooltipContent>
                 </Tooltip>
               )}
               {idx < processedItems.length && !disabled && (
                 <Button
                   size="sm"
-                  variant="flat"
-                  color="warning"
-                  onPress={() => handleUpdate(idx, '', '')}
+                  variant="ghost"
+                  className="text-amber-500 hover:text-amber-600"
+                  onClick={() => handleUpdate(idx, '', '')}
                 >
                   <MdDeleteForever className="text-lg" />
                 </Button>
@@ -244,7 +234,7 @@ const EditableList: React.FC<EditableListProps> = ({
           )
         })}
       </div>
-      {divider && <Divider className="mt-2 mb-2" />}
+      {divider && <Separator className="mt-2 mb-2" />}
     </>
   )
 }

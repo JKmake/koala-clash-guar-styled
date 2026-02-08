@@ -56,11 +56,15 @@ const ProxyItem: React.FC<Props> = (props) => {
     <Card
       onClick={() => onSelect(group.name, proxy.name)}
       className={cn(
-        'w-full gap-0 py-0 border-0 shadow-sm rounded-sm cursor-pointer',
-        fixed ? 'bg-secondary/30' : selected ? 'bg-primary/30' : 'bg-accent'
+        'w-full gap-0 py-0 cursor-pointer transition-colors',
+        fixed
+          ? 'bg-secondary/20 hover:bg-secondary/30 border-secondary/30'
+          : selected
+            ? 'bg-primary/10 hover:bg-primary/15 border-primary/30'
+            : 'hover:bg-accent/50'
       )}
     >
-      <CardContent className="py-1.5 px-2">
+      <CardContent className="px-3 py-2">
         <div
           className={`flex ${proxyDisplayLayout === 'double' ? 'gap-1' : 'justify-between items-center'}`}
         >
@@ -86,7 +90,7 @@ const ProxyItem: React.FC<Props> = (props) => {
                       await mihomoUnfixedProxy(group.name)
                       mutateProxies()
                     }}
-                    className="h-[24px] w-[24px] min-w-[24px] p-0 text-xs text-destructive"
+                    className="h-6 w-6 min-w-6 p-0 text-xs text-destructive"
                   >
                     <FaMapPin className="text-xs" />
                   </Button>
@@ -99,7 +103,7 @@ const ProxyItem: React.FC<Props> = (props) => {
                     e.stopPropagation()
                     onDelay()
                   }}
-                  className={cn('h-[32px] w-[32px] min-w-[32px] p-0 text-xs', delayColor(delay))}
+                  className={cn('h-8 w-8 min-w-8 p-0 text-xs', delayColor(delay))}
                 >
                   {delayText(delay)}
                 </Button>
@@ -128,7 +132,7 @@ const ProxyItem: React.FC<Props> = (props) => {
                         await mihomoUnfixedProxy(group.name)
                         mutateProxies()
                       }}
-                      className="h-[24px] w-[24px] min-w-[24px] p-0 text-xs text-destructive"
+                      className="h-6 w-6 min-w-6 p-0 text-xs text-destructive"
                     >
                       <FaMapPin className="text-xs" />
                     </Button>
@@ -144,7 +148,7 @@ const ProxyItem: React.FC<Props> = (props) => {
                       onDelay()
                     }}
                     className={cn(
-                      'h-full w-[32px] min-w-[32px] p-0 text-sm',
+                      'h-full w-8 min-w-8 p-0 text-sm',
                       delayColor(delay)
                     )}
                   >

@@ -1,4 +1,15 @@
-import { Button, Input, Select, SelectItem, Switch, Tab, Tabs } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import { Input } from '@renderer/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
+import { Spinner } from '@renderer/components/ui/spinner'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import BasePage from '@renderer/components/base/base-page'
 import SettingCard from '@renderer/components/base/base-setting-card'
 import SettingItem from '@renderer/components/base/base-setting-item'
@@ -149,11 +160,34 @@ const Mihomo: React.FC = () => {
     }
   }
 
+  const extraUnGrantButtons: ConfirmButton[] =
+    platform === 'win32'
+      ? [
+          {
+            key: 'cancel-and-restart',
+            text: t('pages.mihomo.cancelAndRestart'),
+            variant: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteElevateTask()
+                new Notification(t('pages.mihomo.taskScheduleCanceled'))
+                await patchAppConfig({
+                  corePermissionMode: pendingPermissionMode as 'elevated' | 'service'
+                })
+                await relaunchApp()
+              } catch (e) {
+                alert(e)
+              }
+            }
+          }
+        ]
+      : []
+
   const unGrantButtons: ConfirmButton[] = [
     {
       key: 'cancel',
       text: t('common.cancel'),
-      variant: 'light',
+      variant: 'ghost',
       onPress: () => {}
     },
     {
@@ -162,7 +196,7 @@ const Mihomo: React.FC = () => {
         platform === 'win32'
           ? t('pages.mihomo.noRestartCancel')
           : t('pages.mihomo.confirmRevoke'),
-      color: 'warning',
+      variant: 'destructive',
       onPress: async () => {
         try {
           if (platform === 'win32') {
@@ -182,27 +216,7 @@ const Mihomo: React.FC = () => {
         }
       }
     },
-    ...(platform === 'win32'
-      ? [
-          {
-            key: 'cancel-and-restart',
-            text: t('pages.mihomo.cancelAndRestart'),
-            color: 'danger' as const,
-            onPress: async () => {
-              try {
-                await deleteElevateTask()
-                new Notification(t('pages.mihomo.taskScheduleCanceled'))
-                await patchAppConfig({
-                  corePermissionMode: pendingPermissionMode as 'elevated' | 'service'
-                })
-                await relaunchApp()
-              } catch (e) {
-                alert(e)
-              }
-            }
-          }
-        ]
-      : [])
+    ...extraUnGrantButtons
   ]
 
   return (
@@ -283,55 +297,70 @@ const Mihomo: React.FC = () => {
           actions={
             core === 'mihomo' || core === 'mihomo-alpha' ? (
               <Button
-                size="sm"
-                isIconOnly
+                size="icon-sm"
                 title={t('pages.mihomo.upgradeCore')}
-                variant="light"
-                isLoading={upgrading}
-                onPress={handleCoreUpgrade}
+                variant="ghost"
+                disabled={upgrading}
+                aria-busy={upgrading}
+                onClick={handleCoreUpgrade}
               >
-                <IoMdCloudDownload className="text-lg" />
+                {upgrading ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <IoMdCloudDownload className="text-lg" />
+                )}
               </Button>
             ) : null
           }
           divider
         >
           <Select
-            classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
-            className="w-[300px]"
-            size="sm"
-            selectedKeys={new Set([core])}
-            disallowEmptySelection={true}
-            onSelectionChange={(v) =>
-              handleCoreChange(v.currentKey as 'mihomo' | 'mihomo-alpha' | 'system')
+            value={core}
+            onValueChange={(value) =>
+              handleCoreChange(value as 'mihomo' | 'mihomo-alpha' | 'system')
             }
           >
-            <SelectItem key="mihomo">{t('pages.mihomo.builtinStable')}</SelectItem>
-            <SelectItem key="mihomo-alpha">{t('pages.mihomo.builtinPreview')}</SelectItem>
-            <SelectItem key="system">{t('pages.mihomo.useSystemCore')}</SelectItem>
+            <SelectTrigger size="sm" className="w-[300px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mihomo">{t('pages.mihomo.builtinStable')}</SelectItem>
+              <SelectItem value="mihomo-alpha">{t('pages.mihomo.builtinPreview')}</SelectItem>
+              <SelectItem value="system">{t('pages.mihomo.useSystemCore')}</SelectItem>
+            </SelectContent>
           </Select>
         </SettingItem>
         {core === 'system' && (
           <SettingItem title={t('pages.mihomo.systemCorePath')} divider>
             <Select
-              classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
-              className="w-[350px]"
-              size="sm"
-              selectedKeys={new Set([appConfig?.systemCorePath || ''])}
-              disallowEmptySelection={systemCorePaths.length > 0}
-              isDisabled={loadingPaths}
-              onSelectionChange={(v) => {
-                const selectedPath = v.currentKey as string
-                if (selectedPath) handleConfigChangeWithRestart('systemCorePath', selectedPath)
+              value={appConfig?.systemCorePath}
+              disabled={loadingPaths}
+              onValueChange={(value) => {
+                if (value) handleConfigChangeWithRestart('systemCorePath', value)
               }}
             >
-              {loadingPaths ? (
-                <SelectItem key="">{t('pages.mihomo.searchingCore')}</SelectItem>
-              ) : systemCorePaths.length > 0 ? (
-                systemCorePaths.map((path) => <SelectItem key={path}>{path}</SelectItem>)
-              ) : (
-                <SelectItem key="">{t('pages.mihomo.coreNotFound')}</SelectItem>
-              )}
+              <SelectTrigger size="sm" className="w-[350px]">
+                <SelectValue
+                  placeholder={
+                    loadingPaths
+                      ? t('pages.mihomo.searchingCore')
+                      : t('pages.mihomo.coreNotFound')
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {loadingPaths ? (
+                  <SelectItem value="">{t('pages.mihomo.searchingCore')}</SelectItem>
+                ) : systemCorePaths.length > 0 ? (
+                  systemCorePaths.map((path) => (
+                    <SelectItem key={path} value={path}>
+                      {path}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="">{t('pages.mihomo.coreNotFound')}</SelectItem>
+                )}
+              </SelectContent>
             </Select>
             {!loadingPaths && systemCorePaths.length === 0 && (
               <div className="mt-2 text-sm text-warning">
@@ -341,65 +370,64 @@ const Mihomo: React.FC = () => {
           </SettingItem>
         )}
         <SettingItem title={t('pages.mihomo.runningMode')} divider>
-          <Tabs
-            size="sm"
-            color="primary"
-            selectedKey={corePermissionMode}
-            disabledKeys={['service']}
-            onSelectionChange={(key) => handlePermissionModeChange(key as string)}
-          >
-            <Tab
-              key="elevated"
-              title={platform === 'win32' ? t('pages.mihomo.taskSchedule') : t('pages.mihomo.authorizedRun')}
-            />
-            <Tab key="service" title={t('pages.mihomo.systemService')} />
+          <Tabs value={corePermissionMode} onValueChange={handlePermissionModeChange}>
+            <TabsList className="h-8">
+              <TabsTrigger value="elevated">
+                {platform === 'win32'
+                  ? t('pages.mihomo.taskSchedule')
+                  : t('pages.mihomo.authorizedRun')}
+              </TabsTrigger>
+              <TabsTrigger value="service" disabled>
+                {t('pages.mihomo.systemService')}
+              </TabsTrigger>
+            </TabsList>
           </Tabs>
         </SettingItem>
         <SettingItem
           title={platform === 'win32' ? t('pages.mihomo.taskStatus') : t('pages.mihomo.authStatus')}
           divider
         >
-          <Button size="sm" color="primary" onPress={() => setShowPermissionModal(true)}>
+          <Button size="sm" onClick={() => setShowPermissionModal(true)}>
             {t('pages.mihomo.manage')}
           </Button>
         </SettingItem>
         <SettingItem title={t('pages.mihomo.serviceStatus')} divider>
-          <Button size="sm" color="primary" onPress={() => setShowServiceModal(true)}>
+          <Button size="sm" onClick={() => setShowServiceModal(true)}>
             {t('pages.mihomo.manage')}
           </Button>
         </SettingItem>
         <SettingItem title="IPv6" divider>
           <Switch
             size="sm"
-            isSelected={ipv6}
-            onValueChange={(v) => onChangeNeedRestart({ ipv6: v })}
+            checked={ipv6}
+            onCheckedChange={(v) => onChangeNeedRestart({ ipv6: v })}
           />
         </SettingItem>
         <SettingItem title={t('pages.mihomo.logRetentionDays')} divider>
           <Input
-            size="sm"
             type="number"
-            className="w-[100px]"
+            className="h-8 w-[100px]"
             value={maxLogDays.toString()}
-            onValueChange={(v) => patchAppConfig({ maxLogDays: parseInt(v) })}
+            onChange={(event) =>
+              patchAppConfig({ maxLogDays: parseInt(event.target.value) })
+            }
           />
         </SettingItem>
         <SettingItem title={t('pages.mihomo.logLevel')}>
           <Select
-            classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
-            className="w-[100px]"
-            size="sm"
-            selectedKeys={new Set([logLevel])}
-            disallowEmptySelection={true}
-            onSelectionChange={(v) =>
-              onChangeNeedRestart({ 'log-level': v.currentKey as LogLevel })
-            }
+            value={logLevel}
+            onValueChange={(value) => onChangeNeedRestart({ 'log-level': value as LogLevel })}
           >
-            <SelectItem key="silent">{t('pages.mihomo.silent')}</SelectItem>
-            <SelectItem key="error">{t('pages.mihomo.error')}</SelectItem>
-            <SelectItem key="warning">{t('pages.mihomo.warning')}</SelectItem>
-            <SelectItem key="info">{t('pages.mihomo.info')}</SelectItem>
-            <SelectItem key="debug">{t('pages.mihomo.debug')}</SelectItem>
+            <SelectTrigger size="sm" className="w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="silent">{t('pages.mihomo.silent')}</SelectItem>
+              <SelectItem value="error">{t('pages.mihomo.error')}</SelectItem>
+              <SelectItem value="warning">{t('pages.mihomo.warning')}</SelectItem>
+              <SelectItem value="info">{t('pages.mihomo.info')}</SelectItem>
+              <SelectItem value="debug">{t('pages.mihomo.debug')}</SelectItem>
+            </SelectContent>
           </Select>
         </SettingItem>
       </SettingCard>

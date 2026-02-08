@@ -1,13 +1,13 @@
 import React from 'react'
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from '@heroui/react'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@renderer/components/ui/dialog'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@renderer/components/ui/button'
 
 export interface ConfirmButton {
   key: string
   text: string
   color?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger'
-  variant?: 'solid' | 'bordered' | 'light' | 'flat' | 'faded' | 'shadow' | 'ghost'
+  variant?: 'default' | 'outline' | 'ghost' | 'destructive' | 'secondary' | 'link'
   onPress: () => void | Promise<void>
 }
 
@@ -34,7 +34,6 @@ const ConfirmModal: React.FC<Props> = (props) => {
     buttons,
     className
   } = props
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
 
   const modalTitle = title || t('modal.pleaseConfirm')
   const modalConfirmText = confirmText || t('common.confirm')
@@ -47,8 +46,8 @@ const ConfirmModal: React.FC<Props> = (props) => {
           key={button.key}
           size="sm"
           color={button.color || 'primary'}
-          variant={button.variant || 'solid'}
-          onPress={async () => {
+          variant={button.variant || 'default'}
+          onClick={async () => {
             await button.onPress()
             onChange(false)
           }}
@@ -60,13 +59,13 @@ const ConfirmModal: React.FC<Props> = (props) => {
 
     return (
       <>
-        <Button size="sm" variant="light" onPress={() => onChange(false)}>
+        <Button size="sm" variant="ghost" onClick={() => onChange(false)}>
           {modalCancelText}
         </Button>
         <Button
           size="sm"
-          color="danger"
-          onPress={async () => {
+          variant="destructive"
+          onClick={async () => {
             if (onConfirm) {
               await onConfirm()
             }
@@ -80,27 +79,15 @@ const ConfirmModal: React.FC<Props> = (props) => {
   }
 
   return (
-    <Modal
-      backdrop={disableAnimation ? 'transparent' : 'blur'}
-      disableAnimation={disableAnimation}
-      hideCloseButton
-      isOpen={true}
-      size="5xl"
-      onOpenChange={onChange}
-      scrollBehavior="inside"
-      classNames={{
-        base: 'max-w-none w-full',
-        backdrop: 'top-[48px]'
-      }}
-    >
-      <ModalContent className={['w-[400px]', className].filter(Boolean).join(' ')}>
-        <ModalHeader>{modalTitle}</ModalHeader>
-        <ModalBody>
-          <div className="leading-relaxed">{description}</div>
-        </ModalBody>
-        <ModalFooter className="space-x-2">{renderButtons()}</ModalFooter>
-      </ModalContent>
-    </Modal>
+    <Dialog open={true} onOpenChange={onChange}>
+      <DialogContent className={['w-[400px]', className].filter(Boolean).join(' ')}>
+        <DialogHeader>
+          <DialogTitle>{modalTitle}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>{renderButtons()}</DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 export default ConfirmModal

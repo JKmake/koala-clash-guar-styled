@@ -1,16 +1,15 @@
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Switch,
-  Input,
-  Tab,
-  Tabs,
-  Tooltip
-} from '@heroui/react'
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import { Switch } from '@renderer/components/ui/switch'
+import { Input } from '@renderer/components/ui/input'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import React, { useState, useEffect, useRef } from 'react'
 import SettingItem from '../base/base-setting-item'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
@@ -55,72 +54,73 @@ const ProfileSettingModal: React.FC<Props> = (props) => {
   }, [userAgent])
 
   return (
-    <Modal
-      backdrop="blur"
-      classNames={{ backdrop: 'top-[48px]' }}
-      size="md"
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={onClose}
-      scrollBehavior="inside"
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
     >
-      <ModalContent className="flag-emoji">
-        <ModalHeader className="flex pb-0">{t('pages.profiles.profileSettings')}</ModalHeader>
-        <ModalBody className="py-2 gap-1">
+      <DialogContent className="flag-emoji" showCloseButton={false}>
+        <DialogHeader className="pb-0">
+          <DialogTitle>{t('pages.profiles.profileSettings')}</DialogTitle>
+        </DialogHeader>
+        <div className="py-2 flex flex-col gap-1">
           <SettingItem title={t('profile.showDate')} divider>
             <Tabs
-              size="sm"
-              color="primary"
-              selectedKey={profileDisplayDate}
-              onSelectionChange={async (v) => {
+              value={profileDisplayDate}
+              onValueChange={async (value) => {
                 await patchAppConfig({
-                  profileDisplayDate: v as 'expire' | 'update'
+                  profileDisplayDate: value as 'expire' | 'update'
                 })
               }}
             >
-              <Tab key="update" title={t('profile.dateUpdated')} />
-              <Tab key="expire" title={t('profile.dateExpired')} />
+              <TabsList className="h-8">
+                <TabsTrigger value="update">{t('profile.dateUpdated')}</TabsTrigger>
+                <TabsTrigger value="expire">{t('profile.dateExpired')}</TabsTrigger>
+              </TabsList>
             </Tabs>
           </SettingItem>
           <SettingItem
             title={t('profile.separateWorkDir')}
             actions={
-              <Tooltip content={t('profile.separateWorkDirHelp')}>
-                <Button isIconOnly size="sm" variant="light">
-                  <IoIosHelpCircle className="text-lg" />
-                </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="icon-sm" variant="ghost">
+                    <IoIosHelpCircle className="text-lg" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('profile.separateWorkDirHelp')}</TooltipContent>
               </Tooltip>
             }
             divider
           >
             <Switch
               size="sm"
-              isSelected={diffWorkDir}
-              onValueChange={(v) => {
+              checked={diffWorkDir}
+              onCheckedChange={(v) => {
                 patchAppConfig({ diffWorkDir: v })
               }}
             />
           </SettingItem>
           <SettingItem title={t('profile.subscriptionUA')} divider>
             <Input
-              size="sm"
-              className="w-[60%]"
+              className="w-[60%] h-8"
               value={ua}
               placeholder={t('profile.defaultUserAgent', { value: defaultUserAgent })}
-              onValueChange={(v) => {
-                setUa(v)
-                setUaDebounce(v)
+              onChange={(event) => {
+                setUa(event.target.value)
+                setUaDebounce(event.target.value)
               }}
             />
           </SettingItem>
-        </ModalBody>
-        <ModalFooter>
-          <Button size="sm" variant="light" onPress={onClose}>
+        </div>
+        <DialogFooter>
+          <Button size="sm" variant="ghost" onClick={onClose}>
             {t('common.close')}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

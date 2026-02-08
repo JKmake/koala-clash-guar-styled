@@ -1,19 +1,18 @@
-import {
-  cn,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Input,
-  Switch,
-  Tooltip
-} from '@heroui/react'
 import React, { useState } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import { Input } from '@renderer/components/ui/input'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
+import { cn } from '@renderer/lib/utils'
 import SettingItem from '../base/base-setting-item'
 import { restartCore } from '@renderer/utils/ipc'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { IoIosHelpCircle } from 'react-icons/io'
 import { useTranslation } from 'react-i18next'
 
@@ -27,9 +26,8 @@ interface Props {
 const EditInfoModal: React.FC<Props> = (props) => {
   const { t } = useTranslation()
   const { item, isCurrent, updateProfileItem, onClose } = props
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
   const [values, setValues] = useState({ ...item, autoUpdate: item.autoUpdate ?? true })
-  const inputWidth = 'w-[400px] md:w-[400px] lg:w-[600px] xl:w-[800px]'
+  const inputWidth = 'w-[300px] md:w-[300px] lg:w-[500px] xl:w-[700px]'
 
   const onSave = async (): Promise<void> => {
     try {
@@ -46,31 +44,28 @@ const EditInfoModal: React.FC<Props> = (props) => {
   }
 
   return (
-    <Modal
-      backdrop={disableAnimation ? 'transparent' : 'blur'}
-      disableAnimation={disableAnimation}
-      size="5xl"
-      classNames={{
-        backdrop: 'top-[48px]',
-        base: 'w-[600px] md:w-[600px] lg:w-[800px] xl:w-[1024px]'
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
       }}
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={onClose}
-      scrollBehavior="inside"
     >
-      <ModalContent>
-        <ModalHeader className="flex app-drag">
-          {item.id ? t('profile.editInfo') : t('profile.importRemoteConfig')}
-        </ModalHeader>
-        <ModalBody>
+      <DialogContent
+        className="w-[600px] md:w-[600px] lg:w-[800px] xl:w-[1024px] sm:max-w-none"
+        showCloseButton={false}
+      >
+        <DialogHeader className="app-drag">
+          <DialogTitle>
+            {item.id ? t('profile.editInfo') : t('profile.importRemoteConfig')}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-2 overflow-y-auto max-h-[60vh]">
           <SettingItem title={t('profile.name')}>
             <Input
-              size="sm"
-              className={cn(inputWidth)}
+              className={cn(inputWidth, 'h-8')}
               value={values.name}
-              onValueChange={(v) => {
-                setValues({ ...values, name: v })
+              onChange={(e) => {
+                setValues({ ...values, name: e.target.value })
               }}
             />
           </SettingItem>
@@ -78,29 +73,27 @@ const EditInfoModal: React.FC<Props> = (props) => {
             <>
               <SettingItem title={t('profile.subscriptionAddress')}>
                 <Input
-                  size="sm"
-                  className={cn(inputWidth)}
+                  className={cn(inputWidth, 'h-8')}
                   value={values.url}
-                  onValueChange={(v) => {
-                    setValues({ ...values, url: v })
+                  onChange={(e) => {
+                    setValues({ ...values, url: e.target.value })
                   }}
                 />
               </SettingItem>
               <SettingItem title={t('profile.customUA')}>
                 <Input
-                  size="sm"
-                  className={cn(inputWidth)}
+                  className={cn(inputWidth, 'h-8')}
                   value={values.ua ?? ''}
-                  onValueChange={(v) => {
-                    setValues({ ...values, ua: v.trim() || undefined })
+                  onChange={(e) => {
+                    setValues({ ...values, ua: e.target.value.trim() || undefined })
                   }}
                 />
               </SettingItem>
               <SettingItem title={t('profile.verifyFormat')}>
                 <Switch
                   size="sm"
-                  isSelected={values.verify ?? true}
-                  onValueChange={(v) => {
+                  checked={values.verify ?? true}
+                  onCheckedChange={(v) => {
                     setValues({ ...values, verify: v })
                   }}
                 />
@@ -108,8 +101,8 @@ const EditInfoModal: React.FC<Props> = (props) => {
               <SettingItem title={t('profile.useProxyUpdate')}>
                 <Switch
                   size="sm"
-                  isSelected={values.useProxy ?? false}
-                  onValueChange={(v) => {
+                  checked={values.useProxy ?? false}
+                  onCheckedChange={(v) => {
                     setValues({ ...values, useProxy: v })
                   }}
                 />
@@ -117,8 +110,8 @@ const EditInfoModal: React.FC<Props> = (props) => {
               <SettingItem title={t('profile.autoUpdate')}>
                 <Switch
                   size="sm"
-                  isSelected={values.autoUpdate ?? false}
-                  onValueChange={(v) => {
+                  checked={values.autoUpdate ?? false}
+                  onCheckedChange={(v) => {
                     setValues({ ...values, autoUpdate: v })
                   }}
                 />
@@ -128,21 +121,25 @@ const EditInfoModal: React.FC<Props> = (props) => {
                   title={t('profile.updateIntervalMinutes')}
                   actions={
                     values.locked && (
-                      <Tooltip content={t('profile.updateIntervalLockedHelp')}>
-                        <Button isIconOnly size="sm" variant="light">
-                          <IoIosHelpCircle className="text-lg" />
-                        </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button size="icon-sm" variant="ghost">
+                            <IoIosHelpCircle className="text-lg" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {t('profile.updateIntervalLockedHelp')}
+                        </TooltipContent>
                       </Tooltip>
                     )
                   }
                 >
                   <Input
-                    size="sm"
                     type="number"
-                    className={cn(inputWidth)}
+                    className={cn(inputWidth, 'h-8')}
                     value={values.interval?.toString() ?? ''}
-                    onValueChange={(v) => {
-                      setValues({ ...values, interval: parseInt(v) })
+                    onChange={(e) => {
+                      setValues({ ...values, interval: parseInt(e.target.value) })
                     }}
                     disabled={values.locked}
                   />
@@ -150,17 +147,17 @@ const EditInfoModal: React.FC<Props> = (props) => {
               )}
             </>
           )}
-        </ModalBody>
-        <ModalFooter>
-          <Button size="sm" variant="light" onPress={onClose}>
+        </div>
+        <DialogFooter>
+          <Button size="sm" variant="ghost" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button size="sm" color="primary" onPress={onSave}>
+          <Button size="sm" onClick={onSave}>
             {item.id ? t('common.save') : t('common.import')}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

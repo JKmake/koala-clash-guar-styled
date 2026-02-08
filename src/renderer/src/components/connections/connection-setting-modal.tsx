@@ -1,14 +1,20 @@
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  Button,
-  Switch,
-  ModalBody,
-  Input
-} from '@heroui/react'
 import React from 'react'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import { Switch } from '@renderer/components/ui/switch'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText
+} from '@renderer/components/ui/input-group'
 import SettingItem from '../base/base-setting-item'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { restartMihomoConnections } from '@renderer/utils/ipc'
@@ -25,23 +31,22 @@ const ConnectionSettingModal: React.FC<Props> = (props) => {
   const { displayIcon = true, displayAppName = true, connectionInterval = 500 } = appConfig || {}
 
   return (
-    <Modal
-      backdrop="blur"
-      classNames={{ backdrop: 'top-[48px]' }}
-      size="md"
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={onClose}
-      scrollBehavior="inside"
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
     >
-      <ModalContent className="flag-emoji">
-        <ModalHeader className="flex">{t('pages.connections.connectionSettings')}</ModalHeader>
-        <ModalBody className="py-2 gap-1">
+      <DialogContent className="flag-emoji sm:max-w-md" showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>{t('pages.connections.connectionSettings')}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-1 py-2">
           <SettingItem title={t('connection.showAppIcon')} divider>
             <Switch
               size="sm"
-              isSelected={displayIcon}
-              onValueChange={(v) => {
+              checked={displayIcon}
+              onCheckedChange={(v) => {
                 patchAppConfig({ displayIcon: v })
               }}
             />
@@ -49,37 +54,41 @@ const ConnectionSettingModal: React.FC<Props> = (props) => {
           <SettingItem title={t('connection.showAppName')} divider>
             <Switch
               size="sm"
-              isSelected={displayAppName}
-              onValueChange={(v) => {
+              checked={displayAppName}
+              onCheckedChange={(v) => {
                 patchAppConfig({ displayAppName: v })
               }}
             />
           </SettingItem>
           <SettingItem title={t('connection.refreshInterval')}>
-            <Input
-              type="number"
-              size="sm"
-              className="w-[150px]"
-              endContent={t('connection.refreshIntervalUnit')}
-              value={connectionInterval?.toString()}
-              placeholder={t('connection.refreshIntervalPlaceholder')}
-              onValueChange={async (v) => {
-                let num = parseInt(v)
-                if (isNaN(num)) num = 500
-                if (num < 100) num = 100
-                await patchAppConfig({ connectionInterval: num })
-                await restartMihomoConnections()
-              }}
-            />
+            <InputGroup className="w-[150px]">
+              <InputGroupInput
+                type="number"
+                value={connectionInterval?.toString()}
+                placeholder={t('connection.refreshIntervalPlaceholder')}
+                onChange={async (e) => {
+                  let num = parseInt(e.target.value)
+                  if (isNaN(num)) num = 500
+                  if (num < 100) num = 100
+                  await patchAppConfig({ connectionInterval: num })
+                  await restartMihomoConnections()
+                }}
+              />
+              <InputGroupAddon align="inline-end">
+                <InputGroupText>{t('connection.refreshIntervalUnit')}</InputGroupText>
+              </InputGroupAddon>
+            </InputGroup>
           </SettingItem>
-        </ModalBody>
-        <ModalFooter>
-          <Button size="sm" variant="light" onPress={onClose}>
-            {t('common.close')}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button size="sm" variant="ghost">
+              {t('common.close')}
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

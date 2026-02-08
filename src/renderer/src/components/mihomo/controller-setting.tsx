@@ -1,15 +1,32 @@
 import React, { useState } from 'react'
 import SettingCard from '../base/base-setting-card'
 import SettingItem from '../base/base-setting-item'
-import { Button, Input, Select, SelectItem, Switch, Tooltip } from '@heroui/react'
-import { mihomoUpgradeUI, restartCore } from '@renderer/utils/ipc'
-import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 import EditableList from '../base/base-list-editor'
-import { IoMdCloudDownload, IoMdRefresh } from 'react-icons/io'
-import { HiExternalLink } from 'react-icons/hi'
-import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai'
+import { Button } from '@renderer/components/ui/button'
+import { Input } from '@renderer/components/ui/input'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput
+} from '@renderer/components/ui/input-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
+import { Spinner } from '@renderer/components/ui/spinner'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
+import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
+import { mihomoUpgradeUI, restartCore } from '@renderer/utils/ipc'
 import { isValidListenAddress } from '@renderer/utils/validate'
 import { useTranslation } from 'react-i18next'
+import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai'
+import { HiExternalLink } from 'react-icons/hi'
+import { IoMdCloudDownload, IoMdRefresh } from 'react-icons/io'
 
 const ControllerSetting: React.FC = () => {
   const { t } = useTranslation()
@@ -71,10 +88,9 @@ const ControllerSetting: React.FC = () => {
           {externalControllerInput != externalController && !externalControllerError && (
             <Button
               size="sm"
-              color="primary"
               className="mr-2"
-              isDisabled={!!externalControllerError}
-              onPress={() => {
+              disabled={!!externalControllerError}
+              onClick={() => {
                 onChangeNeedRestart({
                   'external-controller': externalControllerInput
                 })
@@ -83,26 +99,34 @@ const ControllerSetting: React.FC = () => {
               {t('common.confirm')}
             </Button>
           )}
-          <Tooltip
-            content={externalControllerError}
-            placement="right"
-            isOpen={!!externalControllerError}
-            showArrow={true}
-            color="danger"
-            offset={10}
-          >
-            <Input
-              size="sm"
-              className={`w-[200px] ${externalControllerError ? 'border-red-500 ring-1 ring-red-500 rounded-lg' : ''}`}
-              value={externalControllerInput}
-              onValueChange={(v) => {
-                setExternalControllerInput(v)
-                const r = isValidListenAddress(v)
-                setExternalControllerError(
-                  r.ok ? null : (r.error ?? t('mihomo.controllerSettings.formatError'))
-                )
-              }}
-            />
+          <Tooltip open={!!externalControllerError}>
+            <TooltipTrigger asChild>
+              <Input
+                className={
+                  externalControllerError
+                    ? 'w-[200px] h-8 border-red-500 ring-1 ring-red-500 rounded-lg'
+                    : 'w-[200px] h-8'
+                }
+                value={externalControllerInput}
+                onChange={(event) => {
+                  const v = event.target.value
+                  setExternalControllerInput(v)
+                  const r = isValidListenAddress(v)
+                  setExternalControllerError(
+                    r.ok ? null : (r.error ?? t('mihomo.controllerSettings.formatError'))
+                  )
+                }}
+              />
+            </TooltipTrigger>
+            {externalControllerError && (
+              <TooltipContent
+                side="right"
+                sideOffset={10}
+                className="bg-destructive text-destructive-foreground"
+              >
+                {externalControllerError}
+              </TooltipContent>
+            )}
           </Tooltip>
         </div>
       </SettingItem>
@@ -112,11 +136,10 @@ const ControllerSetting: React.FC = () => {
             title={t('mihomo.controllerSettings.accessSecret')}
             actions={
               <Button
-                size="sm"
-                isIconOnly
+                size="icon-sm"
                 title={t('mihomo.controllerSettings.generateSecret')}
-                variant="light"
-                onPress={() => setSecretInput(generateRandomString(32))}
+                variant="ghost"
+                onClick={() => setSecretInput(generateRandomString(32))}
               >
                 <IoMdRefresh className="text-lg" />
               </Button>
@@ -127,42 +150,42 @@ const ControllerSetting: React.FC = () => {
               {secretInput != secret && (
                 <Button
                   size="sm"
-                  color="primary"
                   className="mr-2"
-                  onPress={() => {
+                  onClick={() => {
                     onChangeNeedRestart({ secret: secretInput })
                   }}
                 >
                   {t('common.confirm')}
                 </Button>
               )}
-              <Input
-                size="sm"
-                type={showPassword ? 'text' : 'password'}
-                className="w-[200px]"
-                value={secretInput}
-                onValueChange={setSecretInput}
-                startContent={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
+              <InputGroup className="w-[200px] h-8">
+                <InputGroupAddon align="inline-start">
+                  <InputGroupButton
+                    size="icon-xs"
                     className="text-gray-500 hover:text-gray-700"
+                    onClick={() => setShowPassword((prev) => !prev)}
                   >
                     {showPassword ? (
                       <AiOutlineEyeInvisible className="w-4 h-4" />
                     ) : (
                       <AiOutlineEye className="w-4 h-4" />
                     )}
-                  </button>
-                }
-              />
+                  </InputGroupButton>
+                </InputGroupAddon>
+                <InputGroupInput
+                  type={showPassword ? 'text' : 'password'}
+                  className="h-8"
+                  value={secretInput ?? ''}
+                  onChange={(event) => setSecretInput(event.target.value)}
+                />
+              </InputGroup>
             </div>
           </SettingItem>
           <SettingItem title={t('mihomo.controllerSettings.enableControllerPanel')} divider>
             <Switch
               size="sm"
-              isSelected={enableExternalUi}
-              onValueChange={(v) => {
+              checked={enableExternalUi}
+              onCheckedChange={(v) => {
                 setEnableExternalUi(v)
                 onChangeNeedRestart({
                   'external-ui': v ? 'ui' : undefined
@@ -176,22 +199,24 @@ const ControllerSetting: React.FC = () => {
               actions={
                 <>
                   <Button
-                    size="sm"
-                    isIconOnly
+                    size="icon-sm"
                     title={t('mihomo.controllerSettings.updatePanel')}
-                    variant="light"
-                    isLoading={upgrading}
-                    onPress={upgradeUI}
+                    variant="ghost"
+                    disabled={upgrading}
+                    onClick={upgradeUI}
                   >
-                    <IoMdCloudDownload className="text-lg" />
+                    {upgrading ? (
+                      <Spinner className="size-4" />
+                    ) : (
+                      <IoMdCloudDownload className="text-lg" />
+                    )}
                   </Button>
                   <Button
                     title={t('mihomo.controllerSettings.openInBrowser')}
-                    isIconOnly
-                    size="sm"
+                    size="icon-sm"
                     className="app-nodrag"
-                    variant="light"
-                    onPress={() => {
+                    variant="ghost"
+                    onClick={() => {
                       const controller = externalController.startsWith(':')
                         ? `127.0.0.1${externalController}`
                         : externalController
@@ -230,9 +255,8 @@ const ControllerSetting: React.FC = () => {
                 {externalUiUrlInput != externalUiUrl && (
                   <Button
                     size="sm"
-                    color="primary"
                     className="mr-2"
-                    onPress={() => {
+                    onClick={() => {
                       onChangeNeedRestart({
                         'external-ui-url': externalUiUrlInput
                       })
@@ -242,30 +266,29 @@ const ControllerSetting: React.FC = () => {
                   </Button>
                 )}
                 <Select
-                  classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
-                  className="w-[150px]"
-                  size="sm"
-                  selectedKeys={new Set([externalUiUrlInput])}
-                  disallowEmptySelection={true}
-                  onSelectionChange={(v) => {
-                    setExternalUiUrlInput(v.currentKey as string)
-                  }}
+                  value={externalUiUrlInput}
+                  onValueChange={(value) => setExternalUiUrlInput(value)}
                 >
-                  <SelectItem key="https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip">
-                    zashboard
-                  </SelectItem>
-                  <SelectItem key="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip">
-                    metacubexd
-                  </SelectItem>
-                  <SelectItem key="https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip">
-                    yacd-meta
-                  </SelectItem>
-                  <SelectItem key="https://github.com/haishanh/yacd/archive/refs/heads/gh-pages.zip">
-                    yacd
-                  </SelectItem>
-                  <SelectItem key="https://github.com/MetaCubeX/Razord-meta/archive/refs/heads/gh-pages.zip">
-                    razord-meta
-                  </SelectItem>
+                  <SelectTrigger size="sm" className="w-[150px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip">
+                      zashboard
+                    </SelectItem>
+                    <SelectItem value="https://github.com/MetaCubeX/metacubexd/archive/refs/heads/gh-pages.zip">
+                      metacubexd
+                    </SelectItem>
+                    <SelectItem value="https://github.com/MetaCubeX/Yacd-meta/archive/refs/heads/gh-pages.zip">
+                      yacd-meta
+                    </SelectItem>
+                    <SelectItem value="https://github.com/haishanh/yacd/archive/refs/heads/gh-pages.zip">
+                      yacd
+                    </SelectItem>
+                    <SelectItem value="https://github.com/MetaCubeX/Razord-meta/archive/refs/heads/gh-pages.zip">
+                      razord-meta
+                    </SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
             </SettingItem>
@@ -275,8 +298,8 @@ const ControllerSetting: React.FC = () => {
           <SettingItem title={t('mihomo.controllerSettings.allowPrivateNetwork')}>
             <Switch
               size="sm"
-              isSelected={allowPrivateNetwork}
-              onValueChange={(v) => {
+              checked={allowPrivateNetwork}
+              onCheckedChange={(v) => {
                 onChangeNeedRestart({
                   'external-controller-cors': {
                     ...externalControllerCors,
@@ -291,8 +314,7 @@ const ControllerSetting: React.FC = () => {
             {allowOriginsInput.join(',') != initialAllowOrigins.join(',') && (
               <Button
                 size="sm"
-                color="primary"
-                onPress={() => {
+                onClick={() => {
                   const finalOrigins = allowOriginsInput.length == 0 ? ['*'] : allowOriginsInput
                   onChangeNeedRestart({
                     'external-controller-cors': {

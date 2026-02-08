@@ -1,4 +1,8 @@
-import { Button, Tab, Input, Switch, Tabs, Tooltip } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import { Input } from '@renderer/components/ui/input'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import BasePage from '@renderer/components/base/base-page'
 import SettingCard from '@renderer/components/base/base-setting-card'
 import SettingItem from '@renderer/components/base/base-setting-item'
@@ -7,7 +11,7 @@ import AdvancedDnsSetting from '@renderer/components/dns/advanced-dns-setting'
 import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { restartCore } from '@renderer/utils/ipc'
-import React, { Key, useState } from 'react'
+import React, { useState } from 'react'
 import {
   isValidIPv4Cidr,
   isValidIPv6Cidr,
@@ -113,8 +117,7 @@ const DNS: React.FC = () => {
           <Button
             size="sm"
             className="app-nodrag"
-            color="primary"
-            isDisabled={
+            disabled={
               values && values.enhancedMode === 'fake-ip'
                 ? Boolean(fakeIPRangeError) ||
                   (values.ipv6 && Boolean(fakeIPRange6Error)) ||
@@ -122,7 +125,7 @@ const DNS: React.FC = () => {
                   hasDnsErrors
                 : hasDnsErrors
             }
-            onPress={() => {
+            onClick={() => {
               const hostsObject =
                 values.useHosts && values.hosts && values.hosts.length > 0
                   ? Object.fromEntries(values.hosts.map(({ domain, value }) => [domain, value]))
@@ -157,75 +160,79 @@ const DNS: React.FC = () => {
         <SettingItem title={t('pages.dns.ipv6')} divider>
           <Switch
             size="sm"
-            isSelected={values.ipv6}
-            onValueChange={(v) => {
+            checked={values.ipv6}
+            onCheckedChange={(v) => {
               setValues({ ...values, ipv6: v })
             }}
           />
         </SettingItem>
         <SettingItem title={t('pages.dns.domainMappingMode')} divider>
           <Tabs
-            size="sm"
-            color="primary"
-            selectedKey={values.enhancedMode}
-            onSelectionChange={(key: Key) => setValues({ ...values, enhancedMode: key as DnsMode })}
+            value={values.enhancedMode}
+            onValueChange={(value) => setValues({ ...values, enhancedMode: value as DnsMode })}
           >
-            <Tab key="fake-ip" title={t('pages.dns.fakeIP')} />
-            <Tab key="redir-host" title={t('pages.dns.realIP')} />
-            <Tab key="normal" title={t('pages.dns.cancelMapping')} />
+            <TabsList className="h-8">
+              <TabsTrigger value="fake-ip">{t('pages.dns.fakeIP')}</TabsTrigger>
+              <TabsTrigger value="redir-host">{t('pages.dns.realIP')}</TabsTrigger>
+              <TabsTrigger value="normal">{t('pages.dns.cancelMapping')}</TabsTrigger>
+            </TabsList>
           </Tabs>
         </SettingItem>
         {values.enhancedMode === 'fake-ip' && (
           <>
             <SettingItem title={t('pages.dns.fakeIPRangeIPv4')} divider>
-              <Tooltip
-                content={fakeIPRangeError}
-                placement="right"
-                isOpen={!!fakeIPRangeError}
-                showArrow={true}
-                color="danger"
-                offset={15}
-              >
-                <Input
-                  size="sm"
-                  className={
-                    `w-[40%] ` +
-                    (fakeIPRangeError ? 'border-red-500 ring-1 ring-red-500 rounded-lg' : '')
-                  }
-                  placeholder={t('pages.dns.placeholderExample') + ': 198.18.0.1/16'}
-                  value={values.fakeIPRange}
-                  onValueChange={(v) => {
-                    setValues({ ...values, fakeIPRange: v })
-                    const r = isValidIPv4Cidr(v)
-                    setFakeIPRangeError(r.ok ? null : (r.error ?? t('common.formatError')))
-                  }}
-                />
+              <Tooltip open={!!fakeIPRangeError}>
+                <TooltipTrigger asChild>
+                  <Input
+                    className={
+                      `h-8 w-[40%] ` +
+                      (fakeIPRangeError ? 'border-red-500 ring-1 ring-red-500 rounded-lg' : '')
+                    }
+                    placeholder={t('pages.dns.placeholderExample') + ': 198.18.0.1/16'}
+                    value={values.fakeIPRange}
+                    onChange={(event) => {
+                      const v = event.target.value
+                      setValues({ ...values, fakeIPRange: v })
+                      const r = isValidIPv4Cidr(v)
+                      setFakeIPRangeError(r.ok ? null : (r.error ?? t('common.formatError')))
+                    }}
+                  />
+                </TooltipTrigger>
+                <TooltipContent
+                  side="right"
+                  sideOffset={15}
+                  className="bg-destructive text-destructive-foreground"
+                >
+                  {fakeIPRangeError ?? t('common.formatError')}
+                </TooltipContent>
               </Tooltip>
             </SettingItem>
             {values.ipv6 && (
               <SettingItem title={t('pages.dns.fakeIPRangeIPv6')} divider>
-                <Tooltip
-                  content={fakeIPRange6Error}
-                  placement="right"
-                  isOpen={!!fakeIPRange6Error}
-                  showArrow={true}
-                  color="danger"
-                  offset={10}
-                >
-                  <Input
-                    size="sm"
-                    className={
-                      `w-[40%] ` +
-                      (fakeIPRange6Error ? 'border-red-500 ring-1 ring-red-500 rounded-lg' : '')
-                    }
-                    placeholder={t('pages.dns.placeholderExample') + ': fc00::/18'}
-                    value={values.fakeIPRange6}
-                    onValueChange={(v) => {
-                      setValues({ ...values, fakeIPRange6: v })
-                      const r = isValidIPv6Cidr(v)
-                      setFakeIPRange6Error(r.ok ? null : (r.error ?? t('common.formatError')))
-                    }}
-                  />
+                <Tooltip open={!!fakeIPRange6Error}>
+                  <TooltipTrigger asChild>
+                    <Input
+                      className={
+                        `h-8 w-[40%] ` +
+                        (fakeIPRange6Error ? 'border-red-500 ring-1 ring-red-500 rounded-lg' : '')
+                      }
+                      placeholder={t('pages.dns.placeholderExample') + ': fc00::/18'}
+                      value={values.fakeIPRange6}
+                      onChange={(event) => {
+                        const v = event.target.value
+                        setValues({ ...values, fakeIPRange6: v })
+                        const r = isValidIPv6Cidr(v)
+                        setFakeIPRange6Error(r.ok ? null : (r.error ?? t('common.formatError')))
+                      }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="right"
+                    sideOffset={10}
+                    className="bg-destructive text-destructive-foreground"
+                  >
+                    {fakeIPRange6Error ?? t('common.formatError')}
+                  </TooltipContent>
                 </Tooltip>
               </SettingItem>
             )}

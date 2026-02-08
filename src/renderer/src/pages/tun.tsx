@@ -1,4 +1,8 @@
-import { Button, Input, Switch, Tab, Tabs } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import { Input } from '@renderer/components/ui/input'
+import { Spinner } from '@renderer/components/ui/spinner'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import BasePage from '@renderer/components/base/base-page'
 import SettingCard from '@renderer/components/base/base-setting-card'
 import SettingItem from '@renderer/components/base/base-setting-item'
@@ -6,7 +10,7 @@ import EditableList from '@renderer/components/base/base-list-editor'
 import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 import { restartCore, setupFirewall } from '@renderer/utils/ipc'
 import { platform } from '@renderer/utils/init'
-import React, { Key, useState } from 'react'
+import React, { useState } from 'react'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { useTranslation } from 'react-i18next'
 
@@ -62,8 +66,7 @@ const Tun: React.FC = () => {
             <Button
               size="sm"
               className="app-nodrag"
-              color="primary"
-              onPress={() =>
+              onClick={() =>
                 onSave({
                   tun: {
                     device: values.device,
@@ -90,9 +93,8 @@ const Tun: React.FC = () => {
             <SettingItem title={t('pages.tun.resetFirewall')} divider>
               <Button
                 size="sm"
-                color="primary"
-                isLoading={loading}
-                onPress={async () => {
+                disabled={loading}
+                onClick={async () => {
                   setLoading(true)
                   try {
                     await setupFirewall()
@@ -105,6 +107,7 @@ const Tun: React.FC = () => {
                   }
                 }}
               >
+                {loading && <Spinner className="mr-2 size-4" />}
                 {t('pages.tun.resetFirewallButton')}
               </Button>
             </SettingItem>
@@ -112,49 +115,48 @@ const Tun: React.FC = () => {
           {platform === 'darwin' && (
             <SettingItem title={t('pages.tun.autoSetSystemDNS')} divider>
               <Tabs
-                size="sm"
-                color="primary"
-                selectedKey={autoSetDNSMode}
-                onSelectionChange={async (key: Key) => {
-                  await patchAppConfig({ autoSetDNSMode: key as 'none' | 'exec' | 'service' })
+                value={autoSetDNSMode}
+                onValueChange={async (value) => {
+                  await patchAppConfig({ autoSetDNSMode: value as 'none' | 'exec' | 'service' })
                 }}
               >
-                <Tab key="none" title={t('pages.tun.noAutoSet')} />
-                <Tab key="exec" title={t('pages.tun.execCommand')} />
-                <Tab key="service" title={t('pages.tun.serviceMode')} />
+                <TabsList className="h-8">
+                  <TabsTrigger value="none">{t('pages.tun.noAutoSet')}</TabsTrigger>
+                  <TabsTrigger value="exec">{t('pages.tun.execCommand')}</TabsTrigger>
+                  <TabsTrigger value="service">{t('pages.tun.serviceMode')}</TabsTrigger>
+                </TabsList>
               </Tabs>
             </SettingItem>
           )}
           <SettingItem title={t('pages.tun.tunModeStack')} divider>
             <Tabs
-              size="sm"
-              color="primary"
-              selectedKey={values.stack}
-              onSelectionChange={(key: Key) => setValues({ ...values, stack: key as TunStack })}
+              value={values.stack}
+              onValueChange={(value) => setValues({ ...values, stack: value as TunStack })}
             >
-              <Tab key="gvisor" title="gVisor" />
-              <Tab key="mixed" title="Mixed" />
-              <Tab key="system" title="System" />
+              <TabsList className="h-8">
+                <TabsTrigger value="gvisor">gVisor</TabsTrigger>
+                <TabsTrigger value="mixed">Mixed</TabsTrigger>
+                <TabsTrigger value="system">System</TabsTrigger>
+              </TabsList>
             </Tabs>
           </SettingItem>
           {platform !== 'darwin' && (
             <>
               <SettingItem title={t('pages.tun.tunCardName')} divider>
                 <Input
-                  size="sm"
                   className="w-[100px]"
-                  value={values.device}
-                  onValueChange={(v) => {
-                    setValues({ ...values, device: v })
+                  value={values.device || ''}
+                  onChange={(event) => {
+                    setValues({ ...values, device: event.target.value })
                   }}
                 />
               </SettingItem>
               <SettingItem title={t('pages.tun.strictRoute')} divider>
                 <Switch
                   size="sm"
-                  isSelected={values.strictRoute}
-                  onValueChange={(v) => {
-                    setValues({ ...values, strictRoute: v })
+                  checked={values.strictRoute}
+                  onCheckedChange={(value) => {
+                    setValues({ ...values, strictRoute: value })
                   }}
                 />
               </SettingItem>
@@ -163,9 +165,9 @@ const Tun: React.FC = () => {
           <SettingItem title={t('pages.tun.autoSetRouteRules')} divider>
             <Switch
               size="sm"
-              isSelected={values.autoRoute}
-              onValueChange={(v) => {
-                setValues({ ...values, autoRoute: v })
+              checked={values.autoRoute}
+              onCheckedChange={(value) => {
+                setValues({ ...values, autoRoute: value })
               }}
             />
           </SettingItem>
@@ -173,9 +175,9 @@ const Tun: React.FC = () => {
             <SettingItem title={t('pages.tun.autoSetTCPRedirect')} divider>
               <Switch
                 size="sm"
-                isSelected={values.autoRedirect}
-                onValueChange={(v) => {
-                  setValues({ ...values, autoRedirect: v })
+                checked={values.autoRedirect}
+                onCheckedChange={(value) => {
+                  setValues({ ...values, autoRedirect: value })
                 }}
               />
             </SettingItem>
@@ -183,39 +185,38 @@ const Tun: React.FC = () => {
           <SettingItem title={t('pages.tun.autoSelectTrafficExit')} divider>
             <Switch
               size="sm"
-              isSelected={values.autoDetectInterface}
-              onValueChange={(v) => {
-                setValues({ ...values, autoDetectInterface: v })
+              checked={values.autoDetectInterface}
+              onCheckedChange={(value) => {
+                setValues({ ...values, autoDetectInterface: value })
               }}
             />
           </SettingItem>
           <SettingItem title={t('pages.tun.icmpForwarding')} divider>
             <Switch
               size="sm"
-              isSelected={!values.disableIcmpForwarding}
-              onValueChange={(v) => {
-                setValues({ ...values, disableIcmpForwarding: !v })
+              checked={!values.disableIcmpForwarding}
+              onCheckedChange={(value) => {
+                setValues({ ...values, disableIcmpForwarding: !value })
               }}
             />
           </SettingItem>
           <SettingItem title="MTU" divider>
             <Input
-              size="sm"
               type="number"
               className="w-[100px]"
               value={values.mtu.toString()}
-              onValueChange={(v) => {
-                setValues({ ...values, mtu: parseInt(v) })
+              onChange={(event) => {
+                setValues({ ...values, mtu: parseInt(event.target.value) })
               }}
             />
           </SettingItem>
           <SettingItem title={t('pages.tun.dnsHijack')} divider>
             <Input
-              size="sm"
               className="w-[50%]"
               value={values.dnsHijack.join(',')}
-              onValueChange={(v) => {
-                const arr = v !== '' ? v.split(',') : []
+              onChange={(event) => {
+                const inputValue = event.target.value
+                const arr = inputValue !== '' ? inputValue.split(',') : []
                 setValues({ ...values, dnsHijack: arr })
               }}
             />

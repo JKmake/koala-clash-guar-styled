@@ -1,15 +1,15 @@
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Snippet
-} from '@heroui/react'
 import React, { useEffect, useState } from 'react'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import { Badge } from '@renderer/components/ui/badge'
 import { getInterfaces } from '@renderer/utils/ipc'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { useTranslation } from 'react-i18next'
 
 interface Props {
@@ -19,7 +19,6 @@ interface Props {
 const InterfaceModal: React.FC<Props> = (props) => {
   const { onClose } = props
   const { t } = useTranslation()
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
   const [info, setInfo] = useState<Record<string, NetworkInterfaceInfo[]>>({})
   const getInfo = async (): Promise<void> => {
     setInfo(await getInterfaces())
@@ -30,45 +29,49 @@ const InterfaceModal: React.FC<Props> = (props) => {
   }, [])
 
   return (
-    <Modal
-      backdrop={disableAnimation ? 'transparent' : 'blur'}
-      disableAnimation={disableAnimation}
-      classNames={{ backdrop: 'top-[48px]' }}
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={onClose}
-      scrollBehavior="inside"
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
     >
-      <ModalContent>
-        <ModalHeader className="flex app-drag">{t('mihomo.interfaceModal.title')}</ModalHeader>
-        <ModalBody>
+      <DialogContent showCloseButton={false}>
+        <DialogHeader className="app-drag">
+          <DialogTitle>{t('mihomo.interfaceModal.title')}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-3 overflow-y-auto max-h-[60vh]">
           {Object.entries(info).map(([key, value]) => {
             return (
-              <div key={key}>
+              <div key={key} className="space-y-2">
                 <h4 className="font-bold">{key}</h4>
-                {value.map((v) => {
-                  return (
-                    <div key={v.address}>
-                      <div className="mt-2 flex justify-between">
-                        {v.family}
-                        <Snippet symbol="" size="sm">
+                <div className="space-y-2">
+                  {value.map((v) => {
+                    return (
+                      <div key={v.address} className="flex items-center justify-between gap-3">
+                        <span className="text-sm text-muted-foreground">{v.family}</span>
+                        <Badge
+                          variant="outline"
+                          className="font-mono text-xs max-w-[70%] whitespace-normal break-all"
+                        >
                           {v.address}
-                        </Snippet>
+                        </Badge>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
             )
           })}
-        </ModalBody>
-        <ModalFooter>
-          <Button size="sm" variant="light" onPress={onClose}>
-            {t('common.close')}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button size="sm" variant="ghost">
+              {t('common.close')}
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

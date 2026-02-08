@@ -1,18 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Spinner,
-  Card,
-  CardBody,
-  Chip,
-  Divider
-} from '@heroui/react'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import { Spinner } from '@renderer/components/ui/spinner'
+import { Badge } from '@renderer/components/ui/badge'
+import { Card, CardContent } from '@renderer/components/ui/card'
+import { Separator } from '@renderer/components/ui/separator'
 import { serviceStatus, testServiceConnection } from '@renderer/utils/ipc'
 import { t } from 'i18next'
 
@@ -31,7 +29,6 @@ type ConnectionStatusType = 'connected' | 'disconnected' | 'checking' | 'unknown
 
 const ServiceModal: React.FC<Props> = (props) => {
   const { onChange, onInit, onInstall, onUninstall, onStart, onStop, onRestart } = props
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<ServiceStatusType | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatusType>('checking')
@@ -135,29 +132,48 @@ const ServiceModal: React.FC<Props> = (props) => {
     }
   }
 
+  const getServiceStatusBadgeClass = (): string => {
+    if (status === null) return 'bg-muted-foreground text-white animate-pulse'
+    switch (status) {
+      case 'running':
+        return 'bg-success text-white'
+      case 'stopped':
+        return 'bg-warning text-white'
+      case 'not-installed':
+        return 'bg-destructive text-white'
+      case 'need-init':
+        return 'bg-warning text-white'
+      default:
+        return 'bg-muted-foreground text-white'
+    }
+  }
+
+  const getConnectionBadgeClass = (): string => {
+    switch (connectionStatus) {
+      case 'checking':
+        return 'bg-muted-foreground text-white animate-pulse'
+      case 'connected':
+        return 'bg-success text-white'
+      case 'disconnected':
+        return 'bg-destructive text-white'
+      default:
+        return 'bg-muted-foreground text-white'
+    }
+  }
+
   return (
-    <Modal
-      backdrop={disableAnimation ? 'transparent' : 'blur'}
-      disableAnimation={disableAnimation}
-      hideCloseButton
-      isOpen={true}
-      size="5xl"
-      onOpenChange={onChange}
-      scrollBehavior="inside"
-      classNames={{
-        base: 'max-w-none w-full',
-        backdrop: 'top-[48px]'
-      }}
-    >
-      <ModalContent className="w-[450px]">
-        <ModalHeader className="flex flex-col gap-1">{t('mihomo.serviceModal.title')}</ModalHeader>
-        <ModalBody>
+    <Dialog open={true} onOpenChange={onChange}>
+      <DialogContent
+        className="w-[450px] max-w-[calc(100%-2rem)] max-h-[70vh] flex flex-col"
+        showCloseButton={false}
+      >
+        <DialogHeader className="flex flex-col gap-1">
+          <DialogTitle>{t('mihomo.serviceModal.title')}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="space-y-4">
-            <Card
-              shadow="sm"
-              className="border-none bg-gradient-to-br from-default-50 to-default-100"
-            >
-              <CardBody className="py-4">
+            <Card className="border-none bg-linear-to-br from-muted/30 to-muted/50 py-0 gap-0">
+              <CardContent className="py-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">
@@ -165,32 +181,14 @@ const ServiceModal: React.FC<Props> = (props) => {
                     </span>
                   </div>
                   {status === null ? (
-                    <Chip
-                      color="default"
-                      variant="flat"
-                      size="sm"
-                      startContent={<Spinner size="sm" color="current" />}
-                    >
+                    <Badge className={`text-xs gap-2 ${getServiceStatusBadgeClass()}`}>
+                      <Spinner className="size-3" />
                       {t('mihomo.serviceModal.checkingEllipsis')}
-                    </Chip>
+                    </Badge>
                   ) : (
-                    <Chip
-                      color={
-                        status === 'running'
-                          ? 'success'
-                          : status === 'stopped'
-                            ? 'warning'
-                            : status === 'not-installed'
-                              ? 'danger'
-                              : status === 'need-init'
-                                ? 'warning'
-                                : 'default'
-                      }
-                      variant="flat"
-                      size="sm"
-                    >
+                    <Badge className={`text-xs ${getServiceStatusBadgeClass()}`}>
                       {getStatusText()}
-                    </Chip>
+                    </Badge>
                   )}
                 </div>
 
@@ -201,36 +199,22 @@ const ServiceModal: React.FC<Props> = (props) => {
                     </span>
                   </div>
                   {connectionStatus === 'checking' ? (
-                    <Chip
-                      color="default"
-                      variant="flat"
-                      size="sm"
-                      startContent={<Spinner size="sm" color="current" />}
-                    >
+                    <Badge className={`text-xs gap-2 ${getConnectionBadgeClass()}`}>
+                      <Spinner className="size-3" />
                       {t('mihomo.serviceModal.connectionCheckingEllipsis')}
-                    </Chip>
+                    </Badge>
                   ) : (
-                    <Chip
-                      color={
-                        connectionStatus === 'connected'
-                          ? 'success'
-                          : connectionStatus === 'disconnected'
-                            ? 'danger'
-                            : 'default'
-                      }
-                      variant="flat"
-                      size="sm"
-                    >
+                    <Badge className={`text-xs ${getConnectionBadgeClass()}`}>
                       {getConnectionStatusText()}
-                    </Chip>
+                    </Badge>
                   )}
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
 
-            <Divider />
+            <Separator />
 
-            <div className="text-xs text-default-500 space-y-2">
+            <div className="text-xs text-muted-foreground space-y-2">
               <div className="flex items-start gap-2">
                 <span>{t('mihomo.serviceModal.description1')}</span>
               </div>
@@ -245,13 +229,13 @@ const ServiceModal: React.FC<Props> = (props) => {
               </div>
             </div>
           </div>
-        </ModalBody>
-        <ModalFooter className="flex-col gap-2 sm:flex-row">
+        </div>
+        <DialogFooter className="flex-row flex-wrap justify-end gap-2">
           <Button
             size="sm"
-            variant="light"
-            onPress={() => onChange(false)}
-            isDisabled={loading}
+            variant="ghost"
+            onClick={() => onChange(false)}
+            disabled={loading}
             className="sm:mr-auto"
           >
             {t('common.close')}
@@ -260,68 +244,71 @@ const ServiceModal: React.FC<Props> = (props) => {
           {status === 'unknown' ? null : status === 'not-installed' ? (
             <Button
               size="sm"
-              color="primary"
-              variant="shadow"
-              onPress={() => handleAction(onInstall)}
-              isLoading={loading}
+              className="shadow-sm"
+              onClick={() => handleAction(onInstall)}
+              disabled={loading}
             >
+              {loading && <Spinner className="mr-2 size-4" />}
               {t('mihomo.serviceModal.installService')}
             </Button>
           ) : (
             <>
               <Button
                 size="sm"
-                color="primary"
-                variant="flat"
-                onPress={() => handleAction(onInit)}
-                isLoading={loading}
+                variant="outline"
+                className="border-primary/40 text-primary hover:bg-primary/10"
+                onClick={() => handleAction(onInit)}
+                disabled={loading}
               >
+                {loading && <Spinner className="mr-2 size-4" />}
                 {t('mihomo.serviceModal.init')}
               </Button>
               <Button
                 size="sm"
-                color="primary"
-                variant="flat"
-                onPress={() => handleAction(onRestart)}
-                isLoading={loading}
+                variant="outline"
+                className="border-primary/40 text-primary hover:bg-primary/10"
+                onClick={() => handleAction(onRestart)}
+                disabled={loading}
               >
+                {loading && <Spinner className="mr-2 size-4" />}
                 {t('mihomo.serviceModal.restart')}
               </Button>
               {status === 'running' || status === 'need-init' ? (
                 <Button
                   size="sm"
-                  color="warning"
-                  variant="flat"
-                  onPress={() => handleAction(onStop)}
-                  isLoading={loading}
+                  variant="outline"
+                  className="border-warning text-warning hover:bg-warning/10"
+                  onClick={() => handleAction(onStop)}
+                  disabled={loading}
                 >
+                  {loading && <Spinner className="mr-2 size-4" />}
                   {t('mihomo.serviceModal.stop')}
                 </Button>
               ) : (
                 <Button
                   size="sm"
-                  color="success"
-                  variant="shadow"
-                  onPress={() => handleAction(onStart, true)}
-                  isLoading={loading}
+                  className="bg-success text-white hover:bg-success/90 shadow-sm"
+                  onClick={() => handleAction(onStart, true)}
+                  disabled={loading}
                 >
+                  {loading && <Spinner className="mr-2 size-4" />}
                   {t('mihomo.serviceModal.start')}
                 </Button>
               )}
               <Button
                 size="sm"
-                color="danger"
-                variant="flat"
-                onPress={() => handleAction(onUninstall)}
-                isLoading={loading}
+                variant="destructive"
+                onClick={() => handleAction(onUninstall)}
+                disabled={loading}
               >
+                {loading && <Spinner className="mr-2 size-4" />}
                 {t('mihomo.serviceModal.uninstall')}
               </Button>
             </>
           )}
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

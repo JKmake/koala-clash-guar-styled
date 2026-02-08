@@ -9,7 +9,8 @@ import { Fragment, useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
 import SettingCard from '../base/base-setting-card'
 import SettingItem from '../base/base-setting-item'
-import { Button, Chip } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import { Badge } from '@renderer/components/ui/badge'
 import { IoMdRefresh } from 'react-icons/io'
 import { CgLoadbarDoc } from 'react-icons/cg'
 import { MdEditDocument } from 'react-icons/md'
@@ -120,8 +121,7 @@ const RuleProvider: React.FC = () => {
       <SettingItem title={t('resources.ruleProvider')} divider>
         <Button
           size="sm"
-          color="primary"
-          onPress={() => {
+          onClick={() => {
             providers.forEach((provider, index) => {
               onUpdate(provider.name, index)
             })
@@ -135,21 +135,21 @@ const RuleProvider: React.FC = () => {
           <SettingItem
             title={provider.name}
             actions={
-              <Chip className="ml-2" size="sm">
+              <Badge className="ml-2">
                 {provider.ruleCount}
-              </Chip>
+              </Badge>
             }
           >
             <div className="flex h-[32px] leading-[32px] text-foreground-500">
               <div>{dayjs(provider.updatedAt).fromNow()}</div>
               <Button
-                isIconOnly
                 title={
                   provider.vehicleType == 'File' ? t('resources.edit') : t('resources.view')
                 }
                 className="ml-2"
-                size="sm"
-                onPress={() => {
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => {
                   setShowDetails({
                     show: false,
                     privderType: 'rule-providers',
@@ -168,11 +168,11 @@ const RuleProvider: React.FC = () => {
                 )}
               </Button>
               <Button
-                isIconOnly
                 title={t('common.update')}
                 className="ml-2"
-                size="sm"
-                onPress={() => {
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => {
                   onUpdate(provider.name, index)
                 }}
               >

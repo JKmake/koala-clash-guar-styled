@@ -1,4 +1,8 @@
-import { Button, Input, Switch, Tab, Tabs, Tooltip } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import { Input } from '@renderer/components/ui/input'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import BasePage from '@renderer/components/base/base-page'
 import SettingCard from '@renderer/components/base/base-setting-card'
 import SettingItem from '@renderer/components/base/base-setting-item'
@@ -7,7 +11,7 @@ import PacEditorModal from '@renderer/components/sysproxy/pac-editor-modal'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { platform } from '@renderer/utils/init'
 import { openUWPTool, triggerSysProxy } from '@renderer/utils/ipc'
-import React, { Key, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import ByPassEditorModal from '@renderer/components/sysproxy/bypass-editor-modal'
 import { IoIosHelpCircle } from 'react-icons/io'
 import { useTranslation } from 'react-i18next'
@@ -110,7 +114,7 @@ const Sysproxy: React.FC = () => {
       title={t('pages.sysproxy.title')}
       header={
         changed && (
-          <Button color="primary" className="app-nodrag" size="sm" onPress={onSave}>
+          <Button className="app-nodrag" size="sm" onClick={onSave}>
             {t('common.save')}
           </Button>
         )
@@ -142,31 +146,30 @@ const Sysproxy: React.FC = () => {
       <SettingCard className="sysproxy-settings">
         <SettingItem title={t('pages.sysproxy.proxyHost')} divider>
           <Input
-            size="sm"
             className="w-[50%]"
             value={values.host}
             placeholder={t('pages.sysproxy.proxyHostPlaceholder')}
-            onValueChange={(v) => {
-              setValues({ ...values, host: v })
+            onChange={(event) => {
+              setValues({ ...values, host: event.target.value })
             }}
           />
         </SettingItem>
         <SettingItem title={t('pages.sysproxy.proxyMode')} divider>
           <Tabs
-            size="sm"
-            color="primary"
-            selectedKey={values.mode}
-            onSelectionChange={(key: Key) => setValues({ ...values, mode: key as SysProxyMode })}
+            value={values.mode}
+            onValueChange={(value) => setValues({ ...values, mode: value as SysProxyMode })}
           >
-            <Tab key="manual" title={t('pages.sysproxy.manual')} />
-            <Tab key="auto" title={t('pages.sysproxy.auto')} />
+            <TabsList className="h-8">
+              <TabsTrigger value="manual">{t('pages.sysproxy.manual')}</TabsTrigger>
+              <TabsTrigger value="auto">{t('pages.sysproxy.auto')}</TabsTrigger>
+            </TabsList>
           </Tabs>
         </SettingItem>
         {platform === 'win32' && (
           <SettingItem title={t('pages.sysproxy.uwpTool')} divider>
             <Button
               size="sm"
-              onPress={async () => {
+              onClick={async () => {
                 await openUWPTool()
               }}
             >
@@ -178,40 +181,39 @@ const Sysproxy: React.FC = () => {
           <>
             <SettingItem title={t('pages.sysproxy.settingMethod')} divider>
               <Tabs
-                size="sm"
-                color="primary"
-                selectedKey={values.settingMode}
-                onSelectionChange={(key) => {
-                  setValues({ ...values, settingMode: key as 'exec' | 'service' })
+                value={values.settingMode}
+                onValueChange={(value) => {
+                  setValues({ ...values, settingMode: value as 'exec' | 'service' })
                 }}
               >
-                <Tab key="exec" title={t('pages.sysproxy.execCommand')} />
-                <Tab key="service" title={t('pages.sysproxy.serviceMode')} />
+                <TabsList className="h-8">
+                  <TabsTrigger value="exec">{t('pages.sysproxy.execCommand')}</TabsTrigger>
+                  <TabsTrigger value="service">{t('pages.sysproxy.serviceMode')}</TabsTrigger>
+                </TabsList>
               </Tabs>
             </SettingItem>
             <SettingItem
               title={t('pages.sysproxy.onlyActiveInterface')}
               actions={
-                <Tooltip
-                  content={
-                    <>
-                      <div>{t('pages.sysproxy.onlyActiveInterfaceHelp')}</div>
-                    </>
-                  }
-                >
-                  <Button isIconOnly size="sm" variant="light">
-                    <IoIosHelpCircle className="text-lg" />
-                  </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="icon-sm" variant="ghost">
+                      <IoIosHelpCircle className="text-lg" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div>{t('pages.sysproxy.onlyActiveInterfaceHelp')}</div>
+                  </TooltipContent>
                 </Tooltip>
               }
               divider
             >
               <Switch
                 size="sm"
-                isSelected={onlyActiveDevice}
-                isDisabled={!values.settingMode || values.settingMode !== 'service'}
-                onValueChange={(v) => {
-                  patchAppConfig({ onlyActiveDevice: v })
+                checked={onlyActiveDevice}
+                disabled={!values.settingMode || values.settingMode !== 'service'}
+                onCheckedChange={(value) => {
+                  patchAppConfig({ onlyActiveDevice: value })
                 }}
               />
             </SettingItem>
@@ -219,7 +221,7 @@ const Sysproxy: React.FC = () => {
         )}
         {values.mode === 'auto' && (
           <SettingItem title={t('pages.sysproxy.proxyMode')}>
-            <Button size="sm" onPress={() => setOpenPacEditor(true)}>
+            <Button size="sm" onClick={() => setOpenPacEditor(true)}>
               {t('pages.sysproxy.editPACScript')}
             </Button>
           </SettingItem>
@@ -229,7 +231,7 @@ const Sysproxy: React.FC = () => {
             <SettingItem title={t('pages.sysproxy.addDefaultBypass')} divider>
               <Button
                 size="sm"
-                onPress={() => {
+                onClick={() => {
                   setValues({
                     ...values,
                     bypass: Array.from(new Set([...defaultBypass, ...values.bypass]))
@@ -242,7 +244,7 @@ const Sysproxy: React.FC = () => {
             <SettingItem title={t('pages.sysproxy.proxyBypassList')}>
               <Button
                 size="sm"
-                onPress={async () => {
+                onClick={async () => {
                   setOpenEditor(true)
                 }}
               >

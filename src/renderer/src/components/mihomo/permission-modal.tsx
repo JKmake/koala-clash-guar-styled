@@ -1,18 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Chip,
-  Divider
-} from '@heroui/react'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import { Badge } from '@renderer/components/ui/badge'
+import { Card, CardContent, CardHeader } from '@renderer/components/ui/card'
+import { Separator } from '@renderer/components/ui/separator'
+import { Spinner } from '@renderer/components/ui/spinner'
 import {
   checkCorePermission,
   checkElevateTask,
@@ -30,7 +28,6 @@ interface Props {
 
 const PermissionModal: React.FC<Props> = (props) => {
   const { onChange, onRevoke, onGrant } = props
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
   const [loading, setLoading] = useState<{ mihomo?: boolean; 'mihomo-alpha'?: boolean }>({})
   const [hasPermission, setHasPermission] = useState<
     { mihomo: boolean; 'mihomo-alpha': boolean } | boolean | null
@@ -113,59 +110,49 @@ const PermissionModal: React.FC<Props> = (props) => {
       : t('mihomo.permissionModal.unauthorized')
   }
 
-  const getStatusColor = (coreName: 'mihomo' | 'mihomo-alpha'): string => {
-    if (hasPermission === null) return 'bg-default-400 animate-pulse'
+  const getStatusBadgeClass = (coreName: 'mihomo' | 'mihomo-alpha'): string => {
+    if (hasPermission === null) return 'bg-muted-foreground text-white animate-pulse'
     if (typeof hasPermission === 'boolean') {
-      return hasPermission ? 'bg-success' : 'bg-warning'
+      return hasPermission ? 'bg-success text-white' : 'bg-warning text-white'
     }
-    return hasPermission[coreName] ? 'bg-success' : 'bg-warning'
+    return hasPermission[coreName] ? 'bg-success text-white' : 'bg-warning text-white'
   }
 
   return (
-    <Modal
-      backdrop={disableAnimation ? 'transparent' : 'blur'}
-      disableAnimation={disableAnimation}
-      hideCloseButton
-      isOpen={true}
-      size="5xl"
-      onOpenChange={onChange}
-      scrollBehavior="inside"
-      classNames={{
-        base: 'max-w-none w-full',
-        backdrop: 'top-[48px]'
-      }}
-    >
-      <ModalContent className="w-[450px]">
-        <ModalHeader className="flex flex-col gap-1">
-          {isWindows
-            ? t('notifications.taskScheduleManagement')
-            : t('notifications.coreAuthManagement')}
-        </ModalHeader>
-        <ModalBody>
+    <Dialog open={true} onOpenChange={onChange}>
+      <DialogContent
+        className="w-[450px] max-w-[calc(100%-2rem)] max-h-[70vh] flex flex-col"
+        showCloseButton={false}
+      >
+        <DialogHeader className="flex flex-col gap-1">
+          <DialogTitle>
+            {isWindows
+              ? t('notifications.taskScheduleManagement')
+              : t('notifications.coreAuthManagement')}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="space-y-4">
             {isWindows ? (
               <>
-                <Card
-                  shadow="sm"
-                  className="border-none bg-gradient-to-br from-default-50 to-default-100"
-                >
-                  <CardBody className="py-4">
+                <Card className="border-none bg-gradient-to-br from-muted/30 to-muted/50 py-0 gap-0">
+                  <CardContent className="px-4 py-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">
                           {t('mihomo.permissionModal.taskScheduleStatus')}
                         </span>
                       </div>
-                      <Chip
-                        color={
-                          typeof hasPermission === 'boolean'
-                            ? hasPermission
-                              ? 'success'
-                              : 'warning'
-                            : 'default'
-                        }
-                        variant="flat"
-                        size="sm"
+                      <Badge
+                        className={`text-xs ${
+                          hasPermission === null
+                            ? 'bg-muted-foreground text-white animate-pulse'
+                            : typeof hasPermission === 'boolean'
+                              ? hasPermission
+                                ? 'bg-success text-white'
+                                : 'bg-warning text-white'
+                              : 'bg-muted-foreground text-white'
+                        }`}
                       >
                         {hasPermission === null
                           ? t('mihomo.permissionModal.checkingEllipsis')
@@ -174,14 +161,14 @@ const PermissionModal: React.FC<Props> = (props) => {
                               ? t('mihomo.permissionModal.registered')
                               : t('mihomo.permissionModal.unregistered')
                             : t('mihomo.permissionModal.unknown')}
-                      </Chip>
+                      </Badge>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
 
-                <Divider />
+                <Separator />
 
-                <div className="text-xs text-default-500 space-y-2">
+                <div className="text-xs text-muted-foreground space-y-2">
                   <div className="flex items-start gap-2">
                     <span className="mt-0.5">•</span>
                     <span>{t('mihomo.permissionModal.taskScheduleNote1')}</span>
@@ -199,98 +186,86 @@ const PermissionModal: React.FC<Props> = (props) => {
             ) : (
               <>
                 <div className="space-y-3">
-                  <Card shadow="sm" className="border-none">
-                    <CardHeader className="pb-0 pt-4 px-4 flex-col items-start">
+                  <Card className="border-none py-0 gap-0">
+                    <CardHeader className="px-4 pt-4 pb-0">
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-medium">
+                          <h4 className="font-semibold text-base">
                             {t('pages.mihomo.builtinStable')}
                           </h4>
                         </div>
-                        <Chip
-                          color={getStatusColor('mihomo') === 'bg-success' ? 'success' : 'warning'}
-                          variant="flat"
-                          size="sm"
-                        >
+                        <Badge className={`text-xs ${getStatusBadgeClass('mihomo')}`}>
                           {getStatusText('mihomo')}
-                        </Chip>
+                        </Badge>
                       </div>
                     </CardHeader>
-                    <CardBody className="pt-3 px-4 pb-4">
+                    <CardContent className="px-4 pt-3 pb-4">
                       {typeof hasPermission !== 'boolean' && hasPermission?.mihomo ? (
                         <Button
                           size="sm"
-                          color="warning"
-                          variant="flat"
-                          onPress={() => handleCoreAction('mihomo', false)}
-                          isLoading={loading.mihomo}
-                          fullWidth
+                          variant="outline"
+                          className="w-full border-warning text-warning hover:bg-warning/10"
+                          onClick={() => handleCoreAction('mihomo', false)}
+                          disabled={loading.mihomo}
                         >
+                          {loading.mihomo && <Spinner className="mr-2 size-4" />}
                           {t('mihomo.permissionModal.revokeAuthorization')}
                         </Button>
                       ) : (
                         <Button
                           size="sm"
-                          color="primary"
-                          variant="shadow"
-                          onPress={() => handleCoreAction('mihomo', true)}
-                          isLoading={loading.mihomo}
-                          fullWidth
+                          className="w-full shadow-sm"
+                          onClick={() => handleCoreAction('mihomo', true)}
+                          disabled={loading.mihomo}
                         >
+                          {loading.mihomo && <Spinner className="mr-2 size-4" />}
                           {t('mihomo.permissionModal.authorizeCore')}
                         </Button>
                       )}
-                    </CardBody>
+                    </CardContent>
                   </Card>
 
-                  <Card shadow="sm" className="border-none">
-                    <CardHeader className="pb-0 pt-4 px-4 flex-col items-start">
+                  <Card className="border-none py-0 gap-0">
+                    <CardHeader className="px-4 pt-4 pb-0">
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-medium">
+                          <h4 className="font-semibold text-base">
                             {t('pages.mihomo.builtinPreview')}
                           </h4>
                         </div>
-                        <Chip
-                          color={
-                            getStatusColor('mihomo-alpha') === 'bg-success' ? 'success' : 'warning'
-                          }
-                          variant="flat"
-                          size="sm"
-                        >
+                        <Badge className={`text-xs ${getStatusBadgeClass('mihomo-alpha')}`}>
                           {getStatusText('mihomo-alpha')}
-                        </Chip>
+                        </Badge>
                       </div>
                     </CardHeader>
-                    <CardBody className="pt-3 px-4 pb-4">
+                    <CardContent className="px-4 pt-3 pb-4">
                       {typeof hasPermission !== 'boolean' && hasPermission?.['mihomo-alpha'] ? (
                         <Button
                           size="sm"
-                          color="warning"
-                          variant="flat"
-                          onPress={() => handleCoreAction('mihomo-alpha', false)}
-                          isLoading={loading['mihomo-alpha']}
-                          fullWidth
+                          variant="outline"
+                          className="w-full border-warning text-warning hover:bg-warning/10"
+                          onClick={() => handleCoreAction('mihomo-alpha', false)}
+                          disabled={loading['mihomo-alpha']}
                         >
+                          {loading['mihomo-alpha'] && <Spinner className="mr-2 size-4" />}
                           {t('mihomo.permissionModal.revokeAuthorization')}
                         </Button>
                       ) : (
                         <Button
                           size="sm"
-                          color="primary"
-                          variant="shadow"
-                          onPress={() => handleCoreAction('mihomo-alpha', true)}
-                          isLoading={loading['mihomo-alpha']}
-                          fullWidth
+                          className="w-full shadow-sm"
+                          onClick={() => handleCoreAction('mihomo-alpha', true)}
+                          disabled={loading['mihomo-alpha']}
                         >
+                          {loading['mihomo-alpha'] && <Spinner className="mr-2 size-4" />}
                           {t('mihomo.permissionModal.authorizeCore')}
                         </Button>
                       )}
-                    </CardBody>
+                    </CardContent>
                   </Card>
                 </div>
 
-                <div className="text-xs text-default-500 space-y-2">
+                <div className="text-xs text-muted-foreground space-y-2">
                   <div className="flex items-start gap-2">
                     <span>{t('mihomo.permissionModal.grantNote1')}</span>
                   </div>
@@ -301,13 +276,13 @@ const PermissionModal: React.FC<Props> = (props) => {
               </>
             )}
           </div>
-        </ModalBody>
-        <ModalFooter className="space-x-2">
+        </div>
+        <DialogFooter className="flex-row justify-end gap-2">
           <Button
             size="sm"
-            variant="light"
-            onPress={() => onChange(false)}
-            isDisabled={Object.values(loading).some((v) => v)}
+            variant="ghost"
+            onClick={() => onChange(false)}
+            disabled={Object.values(loading).some((v) => v)}
           >
             {t('common.close')}
           </Button>
@@ -319,26 +294,24 @@ const PermissionModal: React.FC<Props> = (props) => {
               return hasAnyPermission ? (
                 <Button
                   size="sm"
-                  color="warning"
-                  onPress={() => handleAction(onRevoke)}
-                  isLoading={isLoading}
+                  variant="outline"
+                  className="border-warning text-warning hover:bg-warning/10"
+                  onClick={() => handleAction(onRevoke)}
+                  disabled={isLoading}
                 >
+                  {isLoading && <Spinner className="mr-2 size-4" />}
                   {t('mihomo.permissionModal.unregisterTaskSchedule')}
                 </Button>
               ) : (
-                <Button
-                  size="sm"
-                  color="primary"
-                  onPress={() => handleAction(onGrant)}
-                  isLoading={isLoading}
-                >
+                <Button size="sm" onClick={() => handleAction(onGrant)} disabled={isLoading}>
+                  {isLoading && <Spinner className="mr-2 size-4" />}
                   {t('mihomo.permissionModal.registerTaskSchedule')}
                 </Button>
               )
             })()}
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

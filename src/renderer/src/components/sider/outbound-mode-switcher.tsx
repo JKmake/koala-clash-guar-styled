@@ -1,10 +1,9 @@
 /* eslint-disable react/prop-types */
-import { Tabs, Tab } from '@heroui/react'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 import { useGroups } from '@renderer/hooks/use-groups'
 import { mihomoCloseAllConnections, patchMihomoConfig } from '@renderer/utils/ipc'
-import { Key } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface Props {
@@ -33,31 +32,34 @@ const OutboundModeSwitcher: React.FC<Props> = (props) => {
   if (iconOnly) {
     return (
       <Tabs
-        color="primary"
-        selectedKey={mode}
-        classNames={{
-          tabList: 'bg-content1 shadow-medium outbound-mode-card flex-col'
-        }}
-        onSelectionChange={(key: Key) => onChangeMode(key as OutboundMode)}
+        orientation="vertical"
+        value={mode}
+        onValueChange={(value) => onChangeMode(value as OutboundMode)}
       >
-        <Tab className={`${mode === 'rule' ? 'font-bold' : ''}`} key="rule" title="R" />
-        <Tab className={`${mode === 'global' ? 'font-bold' : ''}`} key="global" title="G" />
+        <TabsList className="bg-card shadow-md outbound-mode-card flex-col">
+          <TabsTrigger value="rule" className={mode === 'rule' ? 'font-bold' : ''}>
+            R
+          </TabsTrigger>
+          <TabsTrigger value="global" className={mode === 'global' ? 'font-bold' : ''}>
+            G
+          </TabsTrigger>
+        </TabsList>
       </Tabs>
     )
   }
   return (
-    <Tabs
-      fullWidth
-      color="primary"
-      selectedKey={mode}
-      classNames={{
-        tabList: 'bg-content1 shadow-medium outbound-mode-card'
-      }}
-      onSelectionChange={(key: Key) => onChangeMode(key as OutboundMode)}
-    >
-      <Tab className={`${mode === 'rule' ? 'font-bold' : ''}`} key="rule" title={t('sider.rules')} />
-      <Tab className={`${mode === 'global' ? 'font-bold' : ''}`} key="global" title={t('common.global')} />
-      <Tab className={`${mode === 'direct' ? 'font-bold' : ''}`} key="direct" title={t('sider.directMode')} />
+    <Tabs value={mode} onValueChange={(value) => onChangeMode(value as OutboundMode)}>
+      <TabsList className="bg-card shadow-md outbound-mode-card w-full">
+        <TabsTrigger value="rule" className={mode === 'rule' ? 'font-bold' : ''}>
+          {t('sider.rules')}
+        </TabsTrigger>
+        <TabsTrigger value="global" className={mode === 'global' ? 'font-bold' : ''}>
+          {t('common.global')}
+        </TabsTrigger>
+        <TabsTrigger value="direct" className={mode === 'direct' ? 'font-bold' : ''}>
+          {t('sider.directMode')}
+        </TabsTrigger>
+      </TabsList>
     </Tabs>
   )
 }

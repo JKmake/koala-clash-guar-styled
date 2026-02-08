@@ -1,47 +1,59 @@
-import React, { useRef } from 'react'
-import { Input, InputProps } from '@heroui/react'
-import { FaSearch } from 'react-icons/fa'
+import React, { useRef, useState } from 'react'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput
+} from '@renderer/components/ui/input-group'
+import { Search } from 'lucide-react'
 
-interface CollapseInputProps extends InputProps {
-  title: string
+interface CollapseInputProps {
+  value: string
+  onValueChange: (value: string) => void
 }
 
-const CollapseInput: React.FC<CollapseInputProps> = (props) => {
-  const { title, ...inputProps } = props
+const CollapseInput: React.FC<CollapseInputProps> = ({ value, onValueChange }) => {
   const inputRef = useRef<HTMLInputElement>(null)
+  const [isExpanded, setIsExpanded] = useState(false)
 
-  return (
-    <div className="flex">
-      <Input
-        size="sm"
-        ref={inputRef}
-        {...inputProps}
-        style={{ paddingInlineEnd: 0 }}
-        classNames={{
-          inputWrapper: 'cursor-pointer bg-transparent p-0 data-[hover=true]:bg-content2',
-          input: 'w-0 focus:w-[150px] focus:ml-2 transition-all duration-200'
-        }}
-        endContent={
-          <div
-            className="cursor-pointer p-2 text-lg text-foreground-500"
-            onClick={(e) => {
-              e.stopPropagation()
-              if (inputRef.current?.offsetWidth != 0) {
-                inputRef.current?.blur()
-              } else {
-                inputRef.current?.focus()
-              }
-            }}
-          >
-            <FaSearch title={title} />
-          </div>
-        }
+  if (!isExpanded) {
+    return (
+      <InputGroupButton
         onClick={(e) => {
           e.stopPropagation()
-          inputRef.current?.focus()
+          setIsExpanded(true)
+          setTimeout(() => {
+            inputRef.current?.focus()
+          }, 0)
+        }}
+      >
+        <Search />
+      </InputGroupButton>
+    )
+  }
+
+  return (
+    <InputGroup>
+      <InputGroupInput
+        ref={inputRef}
+        value={value}
+        onChange={(e) => onValueChange?.(e.target.value)}
+        onClick={(e) => {
+          e.stopPropagation()
         }}
       />
-    </div>
+      <InputGroupAddon align="inline-end">
+        <InputGroupButton
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsExpanded(false)
+            onValueChange?.('')
+          }}
+        >
+          <Search />
+        </InputGroupButton>
+      </InputGroupAddon>
+    </InputGroup>
   )
 }
 

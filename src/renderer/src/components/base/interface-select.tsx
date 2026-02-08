@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react'
-import { Select, SelectItem } from '@heroui/react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
 import { getInterfaces } from '@renderer/utils/ipc'
 import { useTranslation } from 'react-i18next'
 
@@ -18,20 +24,21 @@ const InterfaceSelect: React.FC<{
     fetchInterfaces()
   }, [])
 
+  const NONE = '__none__'
+
   return (
-    <Select
-      size="sm"
-      className="w-[300px]"
-      selectedKeys={new Set([value])}
-      disallowEmptySelection={true}
-      onSelectionChange={(v) => onChange(v.currentKey as string)}
-    >
-      <SelectItem key="">{t('common.disabled')}</SelectItem>
-      <>
+    <Select value={value || NONE} onValueChange={(v) => onChange(v === NONE ? '' : v)}>
+      <SelectTrigger size="sm" className="w-[300px]">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={NONE}>{t('common.disabled')}</SelectItem>
         {ifaces.map((name) => (
-          <SelectItem key={name}>{name}</SelectItem>
+          <SelectItem key={name} value={name}>
+            {name}
+          </SelectItem>
         ))}
-      </>
+      </SelectContent>
     </Select>
   )
 }

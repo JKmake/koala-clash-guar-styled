@@ -1,7 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react'
 import SettingCard from '../base/base-setting-card'
 import SettingItem from '../base/base-setting-item'
-import { Button, Select, SelectItem, Switch, Tab, Tabs, Tooltip } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
+import { Spinner } from '@renderer/components/ui/spinner'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import { BiSolidFileImport } from 'react-icons/bi'
 import {
   applyTheme,
@@ -76,58 +87,61 @@ const AppearanceConfig: React.FC = () => {
         <SettingItem
           title={t('settings.appearance.showFloatingWindow')}
           actions={
-            <Tooltip content={t('settings.appearance.showFloatingWindowHelp')}>
-              <Button isIconOnly size="sm" variant="light">
-                <IoIosHelpCircle className="text-lg" />
-              </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon-sm" variant="ghost">
+                  <IoIosHelpCircle className="text-lg" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('settings.appearance.showFloatingWindowHelp')}</TooltipContent>
             </Tooltip>
           }
           divider
         >
           <Switch
             size="sm"
-            isSelected={localShowFloating}
-            onValueChange={async (v) => {
+            checked={localShowFloating}
+            onCheckedChange={async (value) => {
               if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current)
                 timeoutRef.current = null
               }
 
-              setLocalShowFloating(v)
-              if (v) {
+              setLocalShowFloating(value)
+              if (value) {
                 await showFloatingWindow()
                 timeoutRef.current = setTimeout(async () => {
                   if (localShowFloating) {
-                    await patchAppConfig({ showFloatingWindow: v })
+                    await patchAppConfig({ showFloatingWindow: value })
                   }
                   timeoutRef.current = null
                 }, 1000)
               } else {
-                patchAppConfig({ showFloatingWindow: v })
+                patchAppConfig({ showFloatingWindow: value })
                 await closeFloatingWindow()
               }
             }}
-        />
-      </SettingItem>
-      {localShowFloating && (
-        <>
-          <SettingItem title={t('settings.appearance.rotateFloatingIcon')} divider>
-            <Switch
-              size="sm"
-              isSelected={spinFloatingIcon}
-                onValueChange={async (v) => {
-                  await patchAppConfig({ spinFloatingIcon: v })
+          />
+        </SettingItem>
+        {localShowFloating && (
+          <>
+            <SettingItem title={t('settings.appearance.rotateFloatingIcon')} divider>
+              <Switch
+                size="sm"
+                checked={spinFloatingIcon}
+                onCheckedChange={async (value) => {
+                  await patchAppConfig({ spinFloatingIcon: value })
                   window.electron.ipcRenderer.send('updateFloatingWindow')
                 }}
               />
-          </SettingItem>
-          <SettingItem title={t('settings.appearance.disableTrayIcon')} divider>
-            <Switch
-              size="sm"
-                isSelected={disableTray}
-                onValueChange={async (v) => {
-                  await patchAppConfig({ disableTray: v })
-                  if (v) {
+            </SettingItem>
+            <SettingItem title={t('settings.appearance.disableTrayIcon')} divider>
+              <Switch
+                size="sm"
+                checked={disableTray}
+                onCheckedChange={async (value) => {
+                  await patchAppConfig({ disableTray: value })
+                  if (value) {
                     closeTrayIcon()
                   } else {
                     showTrayIcon()
@@ -142,9 +156,9 @@ const AppearanceConfig: React.FC = () => {
             <SettingItem title={t('settings.appearance.trayShowNodeInfo')} divider>
               <Switch
                 size="sm"
-                isSelected={proxyInTray}
-                onValueChange={async (v) => {
-                  await patchAppConfig({ proxyInTray: v })
+                checked={proxyInTray}
+                onCheckedChange={async (value) => {
+                  await patchAppConfig({ proxyInTray: value })
                 }}
               />
             </SettingItem>
@@ -155,10 +169,10 @@ const AppearanceConfig: React.FC = () => {
             <SettingItem title={t('settings.appearance.showDockIcon')} divider>
               <Switch
                 size="sm"
-                isSelected={useDockIcon}
-                onValueChange={async (v) => {
-                  await patchAppConfig({ useDockIcon: v })
-                  setDockVisible(v)
+                checked={useDockIcon}
+                onCheckedChange={async (value) => {
+                  await patchAppConfig({ useDockIcon: value })
+                  setDockVisible(value)
                 }}
               />
             </SettingItem>
@@ -167,26 +181,26 @@ const AppearanceConfig: React.FC = () => {
         <SettingItem title={t('settings.appearance.useSystemTitleBar')} divider>
           <Switch
             size="sm"
-            isSelected={useWindowFrame}
-            onValueChange={async (v) => {
-              await patchAppConfig({ useWindowFrame: v })
+            checked={useWindowFrame}
+            onCheckedChange={async (value) => {
+              await patchAppConfig({ useWindowFrame: value })
               await relaunchApp()
             }}
           />
         </SettingItem>
         <SettingItem title={t('settings.appearance.backgroundColor')} divider>
           <Tabs
-            size="sm"
-            color="primary"
-            selectedKey={appTheme}
-            onSelectionChange={(key) => {
-              setTheme(key.toString())
-              patchAppConfig({ appTheme: key as AppTheme })
+            value={appTheme}
+            onValueChange={(value) => {
+              setTheme(value)
+              patchAppConfig({ appTheme: value as AppTheme })
             }}
           >
-            <Tab key="system" title={t('settings.appearance.auto')} />
-            <Tab key="dark" title={t('settings.appearance.dark')} />
-            <Tab key="light" title={t('settings.appearance.light')} />
+            <TabsList className="h-8">
+              <TabsTrigger value="system">{t('settings.appearance.auto')}</TabsTrigger>
+              <TabsTrigger value="dark">{t('settings.appearance.dark')}</TabsTrigger>
+              <TabsTrigger value="light">{t('settings.appearance.light')}</TabsTrigger>
+            </TabsList>
           </Tabs>
         </SettingItem>
         <SettingItem
@@ -194,12 +208,11 @@ const AppearanceConfig: React.FC = () => {
           actions={
             <>
               <Button
-                size="sm"
-                isLoading={fetching}
-                isIconOnly
+                size="icon-sm"
                 title={t('settings.appearance.pullTheme')}
-                variant="light"
-                onPress={async () => {
+                variant="ghost"
+                disabled={fetching}
+                onClick={async () => {
                   setFetching(true)
                   try {
                     await fetchThemes()
@@ -211,14 +224,17 @@ const AppearanceConfig: React.FC = () => {
                   }
                 }}
               >
-                <IoMdCloudDownload className="text-lg" />
+                {fetching ? (
+                  <Spinner className="text-lg" />
+                ) : (
+                  <IoMdCloudDownload className="text-lg" />
+                )}
               </Button>
               <Button
-                size="sm"
-                isIconOnly
+                size="icon-sm"
                 title={t('settings.appearance.importTheme')}
-                variant="light"
-                onPress={async () => {
+                variant="ghost"
+                onClick={async () => {
                   const files = await getFilePath(['css'])
                   if (!files) return
                   try {
@@ -232,11 +248,10 @@ const AppearanceConfig: React.FC = () => {
                 <BiSolidFileImport className="text-lg" />
               </Button>
               <Button
-                size="sm"
-                isIconOnly
+                size="icon-sm"
                 title={t('settings.appearance.editTheme')}
-                variant="light"
-                onPress={async () => {
+                variant="ghost"
+                onClick={async () => {
                   setOpenCSSEditor(true)
                 }}
               >
@@ -247,22 +262,25 @@ const AppearanceConfig: React.FC = () => {
         >
           {customThemes && (
             <Select
-              classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
-              className="w-[60%]"
-              size="sm"
-              selectedKeys={new Set([customTheme])}
-              disallowEmptySelection={true}
-              onSelectionChange={async (v) => {
+              value={customTheme}
+              onValueChange={async (value) => {
                 try {
-                  await patchAppConfig({ customTheme: v.currentKey as string })
+                  await patchAppConfig({ customTheme: value })
                 } catch (e) {
                   alert(e)
                 }
               }}
             >
-              {customThemes.map((theme) => (
-                <SelectItem key={theme.key}>{theme.label}</SelectItem>
-              ))}
+              <SelectTrigger size="sm" className="w-[60%]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {customThemes.map((theme) => (
+                  <SelectItem key={theme.key} value={theme.key}>
+                    {theme.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           )}
         </SettingItem>

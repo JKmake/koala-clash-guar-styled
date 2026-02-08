@@ -1,16 +1,15 @@
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Switch
-} from '@heroui/react'
 import React, { useEffect, useState } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import { Switch } from '@renderer/components/ui/switch'
 import { BaseEditor } from '../base/base-editor-lazy'
 import { getProfileStr, setProfileStr } from '@renderer/utils/ipc'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
 import ConfirmModal from '../base/base-confirm'
 import { useTranslation } from 'react-i18next'
 
@@ -22,7 +21,6 @@ interface Props {
 const EditFileModal: React.FC<Props> = (props) => {
   const { t } = useTranslation()
   const { id, onClose } = props
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
   const [currData, setCurrData] = useState('')
   const [originalData, setOriginalData] = useState('')
   const [isDiff, setIsDiff] = useState(false)
@@ -50,18 +48,11 @@ const EditFileModal: React.FC<Props> = (props) => {
   }, [])
 
   return (
-    <Modal
-      backdrop={disableAnimation ? 'transparent' : 'blur'}
-      disableAnimation={disableAnimation}
-      classNames={{
-        base: 'max-w-none w-full',
-        backdrop: 'top-[48px]'
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) handleClose()
       }}
-      size="5xl"
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={handleClose}
-      scrollBehavior="inside"
     >
       {isConfirmOpen && (
         <ConfirmModal
@@ -73,13 +64,14 @@ const EditFileModal: React.FC<Props> = (props) => {
           onConfirm={onClose}
         />
       )}
-      <ModalContent className="h-full w-[calc(100%-100px)]">
-        <ModalHeader className="flex pb-0 app-drag">
-          <div className="flex justify-start">
-            <div className="flex items-center">{t('profile.editSubscription')}</div>
-          </div>
-        </ModalHeader>
-        <ModalBody className="h-full">
+      <DialogContent
+        className="h-full w-[calc(100%-100px)] max-w-none sm:max-w-none flex flex-col"
+        showCloseButton={false}
+      >
+        <DialogHeader className="app-drag pb-0">
+          <DialogTitle>{t('profile.editSubscription')}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 min-h-0">
           <BaseEditor
             language="yaml"
             value={currData}
@@ -87,24 +79,25 @@ const EditFileModal: React.FC<Props> = (props) => {
             onChange={(value) => setCurrData(value)}
             diffRenderSideBySide={sideBySide}
           />
-        </ModalBody>
-        <ModalFooter className="pt-0 flex justify-between">
-          <div className="flex items-center space-x-2">
-            <Switch size="sm" isSelected={isDiff} onValueChange={setIsDiff}>
+        </div>
+        <DialogFooter className="pt-0 flex justify-between sm:justify-between">
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center gap-2 text-sm">
+              <Switch size="sm" checked={isDiff} onCheckedChange={setIsDiff} />
               {t('profile.showChanges')}
-            </Switch>
-            <Switch size="sm" isSelected={sideBySide} onValueChange={setSideBySide}>
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Switch size="sm" checked={sideBySide} onCheckedChange={setSideBySide} />
               {t('sider.sideBySide')}
-            </Switch>
+            </label>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="light" onPress={handleClose}>
+            <Button size="sm" variant="ghost" onClick={handleClose}>
               {t('common.cancel')}
             </Button>
             <Button
               size="sm"
-              color="primary"
-              onPress={async () => {
+              onClick={async () => {
                 await setProfileStr(id, currData)
                 onClose()
               }}
@@ -112,9 +105,9 @@ const EditFileModal: React.FC<Props> = (props) => {
               {t('common.save')}
             </Button>
           </div>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

@@ -1,7 +1,29 @@
 import BasePage from '@renderer/components/base/base-page'
 import { mihomoCloseAllConnections, mihomoCloseConnection } from '@renderer/utils/ipc'
-import React, { Key, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Badge, Button, Divider, Input, Select, SelectItem, Tab, Tabs, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Badge } from '@renderer/components/ui/badge'
+import { Button } from '@renderer/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger
+} from '@renderer/components/ui/dropdown-menu'
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput
+} from '@renderer/components/ui/input-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
+import { Separator } from '@renderer/components/ui/separator'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { calcTraffic } from '@renderer/utils/calc'
 import ConnectionItem from '@renderer/components/connections/connection-item'
 import ConnectionTable from '@renderer/components/connections/connection-table'
@@ -73,6 +95,32 @@ const Connections: React.FC = () => {
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<'list' | 'table'>(connectionViewMode)
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(connectionTableColumns))
+  const columnOptions = useMemo(
+    () => [
+      { key: 'status', label: t('connections.detail.status') },
+      { key: 'establishTime', label: t('connections.detail.establishTime') },
+      { key: 'type', label: t('connections.detail.connectionType') },
+      { key: 'host', label: t('connections.detail.host') },
+      { key: 'sniffHost', label: t('connections.detail.sniffHost') },
+      { key: 'process', label: t('connections.detail.processName') },
+      { key: 'processPath', label: t('connections.detail.processPath') },
+      { key: 'rule', label: t('connections.detail.rule') },
+      { key: 'proxyChain', label: t('connections.detail.proxyChain') },
+      { key: 'sourceIP', label: t('connections.detail.sourceIP') },
+      { key: 'sourcePort', label: t('connections.detail.sourcePort') },
+      { key: 'destinationPort', label: t('connections.detail.destinationPort') },
+      { key: 'inboundIP', label: t('connections.detail.inboundIP') },
+      { key: 'inboundPort', label: t('connections.detail.inboundPort') },
+      { key: 'uploadSpeed', label: t('pages.connections.uploadSpeed') },
+      { key: 'downloadSpeed', label: t('pages.connections.downloadSpeed') },
+      { key: 'upload', label: t('pages.connections.uploadAmount') },
+      { key: 'download', label: t('pages.connections.downloadAmount') },
+      { key: 'dscp', label: t('connections.detail.dscp') },
+      { key: 'remoteDestination', label: t('connections.detail.remoteDestination') },
+      { key: 'dnsMode', label: t('connections.detail.dnsMode') }
+    ],
+    [t]
+  )
 
   const iconRequestQueue = useRef(new Set<string>())
   const processingIcons = useRef(new Set<string>())
@@ -430,14 +478,14 @@ const Connections: React.FC = () => {
     displayAppName
   ])
 
-  const handleTabChange = useCallback((key: Key) => {
-    setTab(key as string)
+  const handleTabChange = useCallback((value: string) => {
+    setTab(value)
   }, [])
 
   const handleOrderByChange = useCallback(
-    async (v: unknown) => {
+    async (value: string) => {
       await patchAppConfig({
-        connectionOrderBy: (v as { currentKey: string }).currentKey as
+        connectionOrderBy: value as
           | 'time'
           | 'upload'
           | 'download'
@@ -454,6 +502,22 @@ const Connections: React.FC = () => {
       connectionDirection: connectionDirection === 'asc' ? 'desc' : 'asc'
     })
   }, [connectionDirection, patchAppConfig])
+
+  const handleVisibleColumnToggle = useCallback(
+    (key: string, checked: boolean) => {
+      setVisibleColumns((prev) => {
+        const next = new Set(prev)
+        if (checked) {
+          next.add(key)
+        } else {
+          next.delete(key)
+        }
+        void patchAppConfig({ connectionTableColumns: Array.from(next) })
+        return next
+      })
+    },
+    [patchAppConfig]
+  )
 
   const renderConnectionItem = useCallback(
     (i: number, connection: ControllerConnectionDetail) => {
@@ -513,10 +577,9 @@ const Connections: React.FC = () => {
                   ? t('pages.connections.switchToTable')
                   : t('pages.connections.switchToList')
               }
-              isIconOnly
-              size="sm"
-              variant="light"
-              onPress={async () => {
+              size="icon-sm"
+              variant="ghost"
+              onClick={async () => {
                 const newMode = viewMode === 'list' ? 'table' : 'list'
                 setViewMode(newMode)
                 await patchAppConfig({ connectionViewMode: newMode })
@@ -531,20 +594,13 @@ const Connections: React.FC = () => {
             <Button
               className="app-nodrag ml-1"
               title={isPaused ? t('connections.resume') : t('connections.pause')}
-              isIconOnly
-              size="sm"
-              variant="light"
-              onPress={togglePause}
+              size="icon-sm"
+              variant="ghost"
+              onClick={togglePause}
             >
               {isPaused ? <IoMdPlay className="text-lg" /> : <IoMdPause className="text-lg" />}
             </Button>
-            <Badge
-              className="mt-2"
-              color="primary"
-              variant="flat"
-              showOutline={false}
-              content={filteredConnections.length}
-            >
+            <div className="relative mt-2">
               <Button
                 className="app-nodrag ml-1"
                 title={
@@ -552,10 +608,9 @@ const Connections: React.FC = () => {
                     ? t('pages.connections.closeAll')
                     : t('pages.connections.clearClosed')
                 }
-                isIconOnly
-                size="sm"
-                variant="light"
-                onPress={() => {
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => {
                   if (filter === '') {
                     closeAllConnections()
                   } else {
@@ -571,15 +626,17 @@ const Connections: React.FC = () => {
                   <CgTrash className="text-lg" />
                 )}
               </Button>
-            </Badge>
+              <Badge className="absolute -top-2 -right-2 min-w-5 justify-center px-1">
+                {filteredConnections.length}
+              </Badge>
+            </div>
           </div>
           <Button
-            size="sm"
-            isIconOnly
+            size="icon-sm"
             className="app-nodrag"
-            variant="light"
+            variant="ghost"
             title={t('pages.connections.connectionSettings')}
-            onPress={() => setIsSettingModalOpen(true)}
+            onClick={() => setIsSettingModalOpen(true)}
           >
             <MdTune className="text-lg" />
           </Button>
@@ -594,119 +651,89 @@ const Connections: React.FC = () => {
       )}
       <div className="overflow-x-auto sticky top-0 z-40">
         <div className="flex p-2 gap-2">
-          <Tabs
-            size="sm"
-            color={tab === 'active' ? 'primary' : 'danger'}
-            selectedKey={tab}
-            variant="underlined"
-            className="w-fit h-[32px]"
-            onSelectionChange={handleTabChange}
-          >
-            <Tab
-              key="active"
-              title={
+          <Tabs value={tab} onValueChange={handleTabChange} className="w-fit">
+            <TabsList variant="line" className="h-8">
+              <TabsTrigger value="active" className="gap-2">
                 <Badge
-                  color={tab === 'active' ? 'primary' : 'default'}
-                  size="sm"
-                  shape="circle"
-                  variant="flat"
-                  content={activeConnections.length}
-                  showOutline={false}
+                  variant={tab === 'active' ? 'default' : 'secondary'}
+                  className="min-w-5 justify-center px-1"
                 >
-                  <span className="p-1">{t('pages.connections.active')}</span>
+                  {activeConnections.length}
                 </Badge>
-              }
-            />
-            <Tab
-              key="closed"
-              title={
+                <span>{t('pages.connections.active')}</span>
+              </TabsTrigger>
+              <TabsTrigger value="closed" className="gap-2">
                 <Badge
-                  color={tab === 'closed' ? 'danger' : 'default'}
-                  size="sm"
-                  shape="circle"
-                  variant="flat"
-                  content={closedConnections.length}
-                  showOutline={false}
+                  variant={tab === 'closed' ? 'destructive' : 'secondary'}
+                  className="min-w-5 justify-center px-1"
                 >
-                  <span className="p-1">{t('pages.connections.closed')}</span>
+                  {closedConnections.length}
                 </Badge>
-              }
-            />
+                <span>{t('pages.connections.closed')}</span>
+              </TabsTrigger>
+            </TabsList>
           </Tabs>
-          <Input
-            variant="flat"
-            size="sm"
-            value={filter}
-            placeholder={t('common.filter')}
-            isClearable
-            onValueChange={setFilter}
-          />
+          <InputGroup className="h-8 w-[180px] min-w-[120px]">
+            <InputGroupInput
+              className="h-8 text-sm"
+              value={filter}
+              placeholder={t('common.filter')}
+              onChange={(event) => setFilter(event.target.value)}
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton
+                size="icon-xs"
+                variant="ghost"
+                className={filter ? '' : 'opacity-0 pointer-events-none'}
+                disabled={!filter}
+                aria-label="Clear filter"
+                onClick={() => setFilter('')}
+              >
+                <CgClose className="text-base" />
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
 
           {viewMode === 'table' && (
-            <Dropdown>
-              <DropdownTrigger>
-                <Button
-                  size="sm"
-                  variant="flat"
-                  startContent={<HiOutlineAdjustmentsHorizontal className="text-2xl" />}
-                >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="secondary" className="gap-1.5">
+                  <HiOutlineAdjustmentsHorizontal className="text-2xl" />
                   {t('pages.connections.tableColumns')}
                 </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Column visibility"
-                closeOnSelect={false}
-                selectionMode="multiple"
-                selectedKeys={visibleColumns}
-                onSelectionChange={async (keys) => {
-                  const newColumns = Array.from(keys) as string[]
-                  setVisibleColumns(new Set(newColumns))
-                  await patchAppConfig({ connectionTableColumns: newColumns })
-                }}
-              >
-                <DropdownItem key="status">{t('connections.detail.status')}</DropdownItem>
-                <DropdownItem key="establishTime">{t('connections.detail.establishTime')}</DropdownItem>
-                <DropdownItem key="type">{t('connections.detail.connectionType')}</DropdownItem>
-                <DropdownItem key="host">{t('connections.detail.host')}</DropdownItem>
-                <DropdownItem key="sniffHost">{t('connections.detail.sniffHost')}</DropdownItem>
-                <DropdownItem key="process">{t('connections.detail.processName')}</DropdownItem>
-                <DropdownItem key="processPath">{t('connections.detail.processPath')}</DropdownItem>
-                <DropdownItem key="rule">{t('connections.detail.rule')}</DropdownItem>
-                <DropdownItem key="proxyChain">{t('connections.detail.proxyChain')}</DropdownItem>
-                <DropdownItem key="sourceIP">{t('connections.detail.sourceIP')}</DropdownItem>
-                <DropdownItem key="sourcePort">{t('connections.detail.sourcePort')}</DropdownItem>
-                <DropdownItem key="destinationPort">{t('connections.detail.destinationPort')}</DropdownItem>
-                <DropdownItem key="inboundIP">{t('connections.detail.inboundIP')}</DropdownItem>
-                <DropdownItem key="inboundPort">{t('connections.detail.inboundPort')}</DropdownItem>
-                <DropdownItem key="uploadSpeed">{t('pages.connections.uploadSpeed')}</DropdownItem>
-                <DropdownItem key="downloadSpeed">{t('pages.connections.downloadSpeed')}</DropdownItem>
-                <DropdownItem key="upload">{t('pages.connections.uploadAmount')}</DropdownItem>
-                <DropdownItem key="download">{t('pages.connections.downloadAmount')}</DropdownItem>
-                <DropdownItem key="dscp">{t('connections.detail.dscp')}</DropdownItem>
-                <DropdownItem key="remoteDestination">{t('connections.detail.remoteDestination')}</DropdownItem>
-                <DropdownItem key="dnsMode">{t('connections.detail.dnsMode')}</DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64" aria-label="Column visibility">
+                {columnOptions.map((option) => (
+                  <DropdownMenuCheckboxItem
+                    key={option.key}
+                    checked={visibleColumns.has(option.key)}
+                    onCheckedChange={(checked) =>
+                      handleVisibleColumnToggle(option.key, checked)
+                    }
+                  >
+                    {option.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
           {viewMode === 'list' && (
             <>
-              <Select
-                classNames={{ trigger: 'data-[hover=true]:bg-default-200' }}
-                size="sm"
-                className="w-[180px] min-w-[120px]"
-                selectedKeys={new Set([connectionOrderBy])}
-                disallowEmptySelection={true}
-                onSelectionChange={handleOrderByChange}
-              >
-                <SelectItem key="upload">{t('pages.connections.uploadAmount')}</SelectItem>
-                <SelectItem key="download">{t('pages.connections.downloadAmount')}</SelectItem>
-                <SelectItem key="uploadSpeed">{t('pages.connections.uploadSpeed')}</SelectItem>
-                <SelectItem key="downloadSpeed">{t('pages.connections.downloadSpeed')}</SelectItem>
-                <SelectItem key="time">{t('pages.connections.time')}</SelectItem>
-                <SelectItem key="process">{t('pages.connections.processName')}</SelectItem>
+              <Select value={connectionOrderBy} onValueChange={handleOrderByChange}>
+                <SelectTrigger size="sm" className="w-[180px] min-w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="upload">{t('pages.connections.uploadAmount')}</SelectItem>
+                  <SelectItem value="download">{t('pages.connections.downloadAmount')}</SelectItem>
+                  <SelectItem value="uploadSpeed">{t('pages.connections.uploadSpeed')}</SelectItem>
+                  <SelectItem value="downloadSpeed">{t('pages.connections.downloadSpeed')}</SelectItem>
+                  <SelectItem value="time">{t('pages.connections.time')}</SelectItem>
+                  <SelectItem value="process">{t('pages.connections.processName')}</SelectItem>
+                </SelectContent>
               </Select>
-              <Button size="sm" isIconOnly className="bg-content2" onPress={handleDirectionToggle}>
+              <Button size="icon-sm" variant="secondary" onClick={handleDirectionToggle}>
                 {connectionDirection === 'asc' ? (
                   <HiSortAscending className="text-lg" />
                 ) : (
@@ -716,7 +743,7 @@ const Connections: React.FC = () => {
             </>
           )}
         </div>
-        <Divider />
+        <Separator />
       </div>
       <div className="h-[calc(100vh-100px)] mt-px">
         {viewMode === 'list' ? (

@@ -1,13 +1,14 @@
+import { Button } from '@renderer/components/ui/button'
+import { Checkbox } from '@renderer/components/ui/checkbox'
 import {
-  Button,
-  Checkbox,
-  Divider,
-  Dropdown,
-  DropdownItem,
   DropdownMenu,
-  DropdownTrigger,
-  Input
-} from '@heroui/react'
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@renderer/components/ui/dropdown-menu'
+import { Input } from '@renderer/components/ui/input'
+import { Separator } from '@renderer/components/ui/separator'
+import { Spinner } from '@renderer/components/ui/spinner'
 import BasePage from '@renderer/components/base/base-page'
 import ProfileItem from '@renderer/components/profiles/profile-item'
 import EditInfoModal from '@renderer/components/profiles/edit-info-modal'
@@ -143,6 +144,45 @@ const Profiles: React.FC = () => {
     setSortedItems(itemsArray)
   }, [itemsArray])
 
+  const handleMenuAction = async (action: 'open' | 'new' | 'import'): Promise<void> => {
+    switch (action) {
+      case 'open': {
+        try {
+          const files = await getFilePath(['yml', 'yaml'])
+          if (files?.length) {
+            const content = await readTextFile(files[0])
+            const fileName = files[0].split('/').pop()?.split('\\').pop()
+            await addProfileItem({ name: fileName, type: 'local', file: content })
+          }
+        } catch (e) {
+          alert(e)
+        }
+        break
+      }
+      case 'new': {
+        await addProfileItem({
+          name: t('pages.profiles.newConfig'),
+          type: 'local',
+          file: 'proxies: []\nproxy-groups: []\nrules: []'
+        })
+        break
+      }
+      case 'import': {
+        const newRemoteProfile: ProfileItem = {
+          id: '',
+          name: '',
+          type: 'remote',
+          url: '',
+          useProxy: false,
+          autoUpdate: true
+        }
+        setEditingItem(newRemoteProfile)
+        setShowEditModal(true)
+        break
+      }
+    }
+  }
+
   return (
     <BasePage
       ref={pageRef}
@@ -150,12 +190,12 @@ const Profiles: React.FC = () => {
       header={
         <>
           <Button
-            size="sm"
+            size="icon-sm"
             title={t('pages.profiles.updateAll')}
             className="app-nodrag"
-            variant="light"
-            isIconOnly
-            onPress={async () => {
+            variant="ghost"
+            aria-label={t('pages.profiles.updateAll')}
+            onClick={async () => {
               setUpdating(true)
               for (const item of itemsArray) {
                 if (item.id === current) continue
@@ -172,12 +212,12 @@ const Profiles: React.FC = () => {
             <IoMdRefresh className={`text-lg ${updating ? 'animate-spin' : ''}`} />
           </Button>
           <Button
-            size="sm"
+            size="icon-sm"
             title={t('pages.profiles.profileSettings')}
             className="app-nodrag"
-            variant="light"
-            isIconOnly
-            onPress={() => setIsSettingModalOpen(true)}
+            variant="ghost"
+            aria-label={t('pages.profiles.profileSettings')}
+            onClick={() => setIsSettingModalOpen(true)}
           >
             <MdTune className="text-lg" />
           </Button>
@@ -201,103 +241,65 @@ const Profiles: React.FC = () => {
         />
       )}
       <div className="sticky profiles-sticky top-0 z-40 bg-background">
-        <div className="flex p-2">
-          <Input
-            size="sm"
-            value={url}
-            onValueChange={setUrl}
-            onKeyUp={handleInputKeyUp}
-            endContent={
-              <>
-                <Button
-                  size="sm"
-                  isIconOnly
-                  variant="light"
-                  className="z-10"
-                  onPress={() => {
-                    navigator.clipboard.readText().then((text) => {
-                      setUrl(text)
-                    })
-                  }}
-                >
-                  <MdContentPaste className="text-lg" />
-                </Button>
-                <Checkbox
-                  className="whitespace-nowrap"
-                  checked={useProxy}
-                  onValueChange={setUseProxy}
-                >
-                  {t('common.proxy')}
-                </Checkbox>
-              </>
-            }
-          />
+        <div className="flex flex-wrap items-center gap-2 p-2">
+          <div className="flex flex-1 items-center gap-2 min-w-[220px]">
+            <Input
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              onKeyUp={handleInputKeyUp}
+              className="flex-1"
+            />
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              className="z-10"
+              onClick={() => {
+                navigator.clipboard.readText().then((text) => {
+                  setUrl(text)
+                })
+              }}
+            >
+              <MdContentPaste className="text-lg" />
+            </Button>
+            <label className="flex items-center gap-2 whitespace-nowrap text-sm">
+              <Checkbox
+                checked={useProxy}
+                onCheckedChange={(value) => {
+                  setUseProxy(Boolean(value))
+                }}
+              />
+              <span>{t('common.proxy')}</span>
+            </label>
+          </div>
 
           <Button
             size="sm"
-            color="primary"
-            className="ml-2"
-            isDisabled={isUrlEmpty}
-            isLoading={importing}
-            onPress={() => handleImport(url)}
+            disabled={isUrlEmpty || importing}
+            onClick={() => handleImport(url)}
           >
+            {importing && <Spinner className="mr-2 size-4" />}
             {t('common.import')}
           </Button>
-          <Dropdown>
-            <DropdownTrigger>
-              <Button className="ml-2 new-profile" size="sm" isIconOnly color="primary">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="new-profile" size="icon-sm">
                 <FaPlus />
               </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              onAction={async (key) => {
-                switch (key) {
-                  case 'open': {
-                    try {
-                      const files = await getFilePath(['yml', 'yaml'])
-                      if (files?.length) {
-                        const content = await readTextFile(files[0])
-                        const fileName = files[0].split('/').pop()?.split('\\').pop()
-                        await addProfileItem({ name: fileName, type: 'local', file: content })
-                      }
-                    } catch (e) {
-                      alert(e)
-                    }
-                    break
-                  }
-                  case 'new': {
-                    {
-                      await addProfileItem({
-                        name: t('pages.profiles.newConfig'),
-                        type: 'local',
-                        file: 'proxies: []\nproxy-groups: []\nrules: []'
-                      })
-                    }
-                    break
-                  }
-                  case 'import': {
-                    const newRemoteProfile: ProfileItem = {
-                      id: '',
-                      name: '',
-                      type: 'remote',
-                      url: '',
-                      useProxy: false,
-                      autoUpdate: true
-                    }
-                    setEditingItem(newRemoteProfile)
-                    setShowEditModal(true)
-                    break
-                  }
-                }
-              }}
-            >
-              <DropdownItem key="open">{t('pages.profiles.openLocalConfig')}</DropdownItem>
-              <DropdownItem key="new">{t('pages.profiles.newLocalConfig')}</DropdownItem>
-              <DropdownItem key="import">{t('pages.profiles.importRemoteConfig')}</DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => handleMenuAction('open')}>
+                {t('pages.profiles.openLocalConfig')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleMenuAction('new')}>
+                {t('pages.profiles.newLocalConfig')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleMenuAction('import')}>
+                {t('pages.profiles.importRemoteConfig')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <Divider />
+        <Separator />
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <div

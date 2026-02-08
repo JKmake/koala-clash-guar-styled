@@ -1,17 +1,16 @@
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Code,
-  Progress
-} from '@heroui/react'
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import { Progress } from '@renderer/components/ui/progress'
+import { Spinner } from '@renderer/components/ui/spinner'
 import ReactMarkdown from 'react-markdown'
 import React, { useState } from 'react'
 import { downloadAndInstallUpdate } from '@renderer/utils/ipc'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
 import { FiX, FiDownload } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 
@@ -30,7 +29,6 @@ interface Props {
 const UpdaterModal: React.FC<Props> = (props) => {
   const { t } = useTranslation()
   const { version, changelog, updateStatus, onCancel, onClose } = props
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
   const [downloading, setDownloading] = useState(false)
   const onUpdate = async (): Promise<void> => {
     try {
@@ -53,28 +51,27 @@ const UpdaterModal: React.FC<Props> = (props) => {
   const isDownloading = updateStatus?.downloading || downloading
 
   return (
-    <Modal
-      backdrop={disableAnimation ? 'transparent' : 'blur'}
-      disableAnimation={disableAnimation}
-      classNames={{ backdrop: 'top-[48px]' }}
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={onClose}
-      scrollBehavior="inside"
-      isDismissable={!isDownloading}
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open && !isDownloading) onClose()
+      }}
     >
-      <ModalContent className="h-full w-[calc(100%-100px)]">
-        <ModalHeader className="flex justify-between app-drag">
-          <div className="flex items-center gap-2">
+      <DialogContent
+        className="h-full w-[calc(100%-100px)] max-w-none sm:max-w-none flex flex-col"
+        showCloseButton={false}
+      >
+        <DialogHeader className="app-drag flex-row items-center justify-between">
+          <DialogTitle className="flex items-center gap-2">
             <FiDownload className="text-lg" />
             {t('updater.versionReady', { version })}
-          </div>
+          </DialogTitle>
           {!isDownloading && (
             <Button
-              color="primary"
               size="sm"
-              className="flex app-nodrag"
-              onPress={() => {
+              variant="outline"
+              className="app-nodrag"
+              onClick={() => {
                 if (version.includes('beta')) {
                   open('https://github.com/xishang0128/sparkle/releases/tag/pre-release')
                   return
@@ -85,22 +82,19 @@ const UpdaterModal: React.FC<Props> = (props) => {
               {t('updater.goToDownload')}
             </Button>
           )}
-        </ModalHeader>
-        <ModalBody className="h-full">
+        </DialogHeader>
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {updateStatus?.downloading && (
             <div className="space-y-3 mb-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-default-600">{t('updater.downloadProgress')}</span>
+                <span className="text-sm text-muted-foreground">
+                  {t('updater.downloadProgress')}
+                </span>
                 <span className="text-sm font-medium">{updateStatus.progress}%</span>
               </div>
-              <Progress
-                value={updateStatus.progress}
-                color="primary"
-                size="sm"
-                showValueLabel={false}
-              />
+              <Progress value={updateStatus.progress} />
               {updateStatus.error && (
-                <div className="text-danger text-sm">{updateStatus.error}</div>
+                <div className="text-destructive text-sm">{updateStatus.error}</div>
               )}
             </div>
           )}
@@ -109,7 +103,27 @@ const UpdaterModal: React.FC<Props> = (props) => {
               <ReactMarkdown
                 components={{
                   a: ({ ...props }) => <a target="_blank" className="text-primary" {...props} />,
-                  code: ({ children }) => <Code size="sm">{children}</Code>,
+                  code: ({ className, children, ...props }) => (
+                    <code
+                      className={[
+                        "rounded bg-muted px-1.5 py-0.5 font-mono text-xs",
+                        className
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      {...props}
+                    >
+                      {children}
+                    </code>
+                  ),
+                  pre: ({ children, ...props }) => (
+                    <pre
+                      className="rounded bg-muted p-3 overflow-x-auto [&>code]:bg-transparent [&>code]:p-0 [&>code]:rounded-none"
+                      {...props}
+                    >
+                      {children}
+                    </pre>
+                  ),
                   h3: ({ ...props }) => <h3 className="text-lg font-bold" {...props} />,
                   li: ({ children }) => <li className="list-disc list-inside">{children}</li>
                 }}
@@ -118,30 +132,21 @@ const UpdaterModal: React.FC<Props> = (props) => {
               </ReactMarkdown>
             </div>
           )}
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            size="sm"
-            variant="light"
-            onPress={handleCancel}
-            startContent={updateStatus?.downloading ? <FiX /> : undefined}
-          >
+        </div>
+        <DialogFooter className="gap-2">
+          <Button size="sm" variant="ghost" onClick={handleCancel}>
+            {updateStatus?.downloading ? <FiX className="mr-2" /> : null}
             {updateStatus?.downloading ? t('updater.cancelDownload') : t('common.cancel')}
           </Button>
           {!updateStatus?.downloading && (
-            <Button
-              size="sm"
-              color="primary"
-              isLoading={downloading}
-              startContent={<FiDownload />}
-              onPress={onUpdate}
-            >
+            <Button size="sm" onClick={onUpdate} disabled={downloading}>
+              {downloading ? <Spinner className="mr-2 size-4" /> : <FiDownload className="mr-2" />}
               {t('updater.updateNow')}
             </Button>
           )}
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

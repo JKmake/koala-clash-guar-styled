@@ -3,7 +3,18 @@ import SettingCard from '../base/base-setting-card'
 import SettingItem from '../base/base-setting-item'
 import InterfaceSelect from '../base/interface-select'
 import { restartCore } from '@renderer/utils/ipc'
-import { Button, Input, Select, SelectItem, Switch, Tab, Tabs, Tooltip } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import { Input } from '@renderer/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import { useState } from 'react'
 import { IoIosHelpCircle } from 'react-icons/io'
 import { t } from 'i18next'
@@ -27,6 +38,8 @@ const AdvancedSetting: React.FC = () => {
 
   const [idleInput, setIdleInput] = useState(idle)
   const [intervalInput, setIntervalInput] = useState(interval)
+  const NONE = '__none__'
+  const fingerprintValue = globalClientFingerprint || NONE
 
   const onChangeNeedRestart = async (patch: Partial<MihomoConfig>): Promise<void> => {
     await patchControledMihomoConfig(patch)
@@ -37,80 +50,86 @@ const AdvancedSetting: React.FC = () => {
     <SettingCard title={t('mihomo.advancedSettings.title')}>
       <SettingItem title={t('mihomo.advancedSettings.findProcess')} divider>
         <Tabs
-          size="sm"
-          color="primary"
-          selectedKey={findProcessMode}
-          onSelectionChange={(key) => {
-            onChangeNeedRestart({ 'find-process-mode': key as FindProcessMode })
+          value={findProcessMode}
+          onValueChange={(value) => {
+            onChangeNeedRestart({ 'find-process-mode': value as FindProcessMode })
           }}
         >
-          <Tab key="strict" title={t('mihomo.advancedSettings.auto')}></Tab>
-          <Tab key="off" title={t('common.close')}></Tab>
-          <Tab key="always" title={t('mihomo.advancedSettings.enable')}></Tab>
+          <TabsList className="h-8">
+            <TabsTrigger value="strict">{t('mihomo.advancedSettings.auto')}</TabsTrigger>
+            <TabsTrigger value="off">{t('common.close')}</TabsTrigger>
+            <TabsTrigger value="always">{t('mihomo.advancedSettings.enable')}</TabsTrigger>
+          </TabsList>
         </Tabs>
       </SettingItem>
       <SettingItem title={t('mihomo.advancedSettings.storeSelected')} divider>
         <Switch
           size="sm"
-          isSelected={storeSelected}
-          onValueChange={(v) => {
-            onChangeNeedRestart({ profile: { 'store-selected': v } })
+          checked={storeSelected}
+          onCheckedChange={(value) => {
+            onChangeNeedRestart({ profile: { 'store-selected': value } })
           }}
         />
       </SettingItem>
       <SettingItem title={t('mihomo.advancedSettings.storeFakeIP')} divider>
         <Switch
           size="sm"
-          isSelected={storeFakeIp}
-          onValueChange={(v) => {
-            onChangeNeedRestart({ profile: { 'store-fake-ip': v } })
+          checked={storeFakeIp}
+          onCheckedChange={(value) => {
+            onChangeNeedRestart({ profile: { 'store-fake-ip': value } })
           }}
         />
       </SettingItem>
       <SettingItem
         title={t('mihomo.advancedSettings.unifiedDelay')}
         actions={
-          <Tooltip content={t('mihomo.advancedSettings.unifiedDelayTip')}>
-            <Button isIconOnly size="sm" variant="light">
-              <IoIosHelpCircle className="text-lg" />
-            </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="icon-sm" variant="ghost">
+                <IoIosHelpCircle className="text-lg" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('mihomo.advancedSettings.unifiedDelayTip')}</TooltipContent>
           </Tooltip>
         }
         divider
       >
         <Switch
           size="sm"
-          isSelected={unifiedDelay}
-          onValueChange={(v) => {
-            onChangeNeedRestart({ 'unified-delay': v })
+          checked={unifiedDelay}
+          onCheckedChange={(value) => {
+            onChangeNeedRestart({ 'unified-delay': value })
           }}
         />
       </SettingItem>
       <SettingItem
         title={t('mihomo.advancedSettings.tcpConcurrent')}
         actions={
-          <Tooltip content={t('mihomo.advancedSettings.tcpConcurrentTip')}>
-            <Button isIconOnly size="sm" variant="light">
-              <IoIosHelpCircle className="text-lg" />
-            </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button size="icon-sm" variant="ghost">
+                <IoIosHelpCircle className="text-lg" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t('mihomo.advancedSettings.tcpConcurrentTip')}</TooltipContent>
           </Tooltip>
         }
         divider
       >
         <Switch
           size="sm"
-          isSelected={tcpConcurrent}
-          onValueChange={(v) => {
-            onChangeNeedRestart({ 'tcp-concurrent': v })
+          checked={tcpConcurrent}
+          onCheckedChange={(value) => {
+            onChangeNeedRestart({ 'tcp-concurrent': value })
           }}
         />
       </SettingItem>
       <SettingItem title={t('mihomo.advancedSettings.disableTCPKeepAlive')} divider>
         <Switch
           size="sm"
-          isSelected={disableKeepAlive}
-          onValueChange={(v) => {
-            onChangeNeedRestart({ 'disable-keep-alive': v })
+          checked={disableKeepAlive}
+          onCheckedChange={(value) => {
+            onChangeNeedRestart({ 'disable-keep-alive': value })
           }}
         />
       </SettingItem>
@@ -119,9 +138,8 @@ const AdvancedSetting: React.FC = () => {
           {intervalInput !== interval && (
             <Button
               size="sm"
-              color="primary"
               className="mr-2"
-              onPress={async () => {
+              onClick={async () => {
                 await onChangeNeedRestart({ 'keep-alive-interval': intervalInput })
               }}
             >
@@ -129,13 +147,12 @@ const AdvancedSetting: React.FC = () => {
             </Button>
           )}
           <Input
-            size="sm"
             type="number"
-            className="w-[100px]"
+            className="w-[100px] h-8"
             value={intervalInput.toString()}
             min={0}
-            onValueChange={(v) => {
-              setIntervalInput(parseInt(v) || 0)
+            onChange={(event) => {
+              setIntervalInput(parseInt(event.target.value) || 0)
             }}
           />
         </div>
@@ -145,9 +162,8 @@ const AdvancedSetting: React.FC = () => {
           {idleInput !== idle && (
             <Button
               size="sm"
-              color="primary"
               className="mr-2"
-              onPress={async () => {
+              onClick={async () => {
                 await onChangeNeedRestart({ 'keep-alive-idle': idleInput })
               }}
             >
@@ -155,37 +171,40 @@ const AdvancedSetting: React.FC = () => {
             </Button>
           )}
           <Input
-            size="sm"
             type="number"
-            className="w-[100px]"
+            className="w-[100px] h-8"
             value={idleInput.toString()}
             min={0}
-            onValueChange={(v) => {
-              setIdleInput(parseInt(v) || 0)
+            onChange={(event) => {
+              setIdleInput(parseInt(event.target.value) || 0)
             }}
           />
         </div>
       </SettingItem>
       <SettingItem title={t('mihomo.advancedSettings.utlsFingerprint')} divider>
         <Select
-          size="sm"
-          className="w-[150px]"
-          selectedKeys={new Set([globalClientFingerprint])}
-          disallowEmptySelection={true}
-          onSelectionChange={(v) => {
-            onChangeNeedRestart({ 'global-client-fingerprint': v.currentKey as Fingerprints })
+          value={fingerprintValue}
+          onValueChange={(value) => {
+            onChangeNeedRestart({
+              'global-client-fingerprint': (value === NONE ? '' : value) as Fingerprints
+            })
           }}
         >
-          <SelectItem key="">{t('mihomo.advancedSettings.disabled')}</SelectItem>
-          <SelectItem key="random">{t('mihomo.advancedSettings.random')}</SelectItem>
-          <SelectItem key="chrome">Chrome</SelectItem>
-          <SelectItem key="firefox">Firefox</SelectItem>
-          <SelectItem key="safari">Safari</SelectItem>
-          <SelectItem key="ios">iOS</SelectItem>
-          <SelectItem key="android">Android</SelectItem>
-          <SelectItem key="edge">Edge</SelectItem>
-          <SelectItem key="360">360</SelectItem>
-          <SelectItem key="qq">QQ</SelectItem>
+          <SelectTrigger size="sm" className="w-[150px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NONE}>{t('mihomo.advancedSettings.disabled')}</SelectItem>
+            <SelectItem value="random">{t('mihomo.advancedSettings.random')}</SelectItem>
+            <SelectItem value="chrome">Chrome</SelectItem>
+            <SelectItem value="firefox">Firefox</SelectItem>
+            <SelectItem value="safari">Safari</SelectItem>
+            <SelectItem value="ios">iOS</SelectItem>
+            <SelectItem value="android">Android</SelectItem>
+            <SelectItem value="edge">Edge</SelectItem>
+            <SelectItem value="360">360</SelectItem>
+            <SelectItem value="qq">QQ</SelectItem>
+          </SelectContent>
         </Select>
       </SettingItem>
       <SettingItem title={t('mihomo.advancedSettings.outboundInterface')}>

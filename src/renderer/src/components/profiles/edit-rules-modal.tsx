@@ -1,20 +1,39 @@
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Chip,
-  Input,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
+import { Badge } from '@renderer/components/ui/badge'
+import { Input } from '@renderer/components/ui/input'
+import { Label } from '@renderer/components/ui/label'
+import {
   Select,
+  SelectContent,
   SelectItem,
-  Autocomplete,
-  AutocompleteItem,
-  Checkbox,
-  Divider,
-  Spinner
-} from '@heroui/react'
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
+import { Checkbox } from '@renderer/components/ui/checkbox'
+import { Separator } from '@renderer/components/ui/separator'
+import { Spinner } from '@renderer/components/ui/spinner'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@renderer/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from '@renderer/components/ui/command'
+import { cn } from '@renderer/lib/utils'
+import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react'
 import React, {
   useEffect,
   useState,
@@ -165,7 +184,7 @@ const ruleDefinitionsMap = new Map<
       example: '13335',
       noResolve: true,
       src: true,
-      validator: (value) => (+value ? true : false)
+      validator: (value) => (!!(+value))
     }
   ],
   [
@@ -173,7 +192,7 @@ const ruleDefinitionsMap = new Map<
     {
       name: 'SRC-IP-ASN',
       example: '9808',
-      validator: (value) => (+value ? true : false)
+      validator: (value) => (!!(+value))
     }
   ],
   [
@@ -297,7 +316,7 @@ const ruleDefinitionsMap = new Map<
     {
       name: 'UID',
       example: '1001',
-      validator: (value) => (+value ? true : false)
+      validator: (value) => (!!(+value))
     }
   ],
   [
@@ -420,31 +439,31 @@ const RuleListItemBase: React.FC<RuleListItemProps> = ({
   onMoveDown,
   onRemove
 }) => {
-  let bgColorClass = 'bg-content2'
+  let bgColorClass = 'bg-muted'
   let textStyleClass = ''
 
   if (isDeleted) {
-    bgColorClass = 'bg-danger-50 opacity-70'
-    textStyleClass = 'line-through text-foreground-500'
+    bgColorClass = 'bg-destructive/10 opacity-70'
+    textStyleClass = 'line-through text-muted-foreground'
   } else if (isPrependOrAppend) {
-    bgColorClass = 'bg-success-50'
+    bgColorClass = 'bg-green-500/10'
   }
 
   return (
     <div className={`flex items-center gap-2 p-2 rounded-lg ${bgColorClass}`}>
       <div className="flex flex-col">
         <div className="flex items-center gap-1">
-          <Chip size="sm" variant="flat">
+          <Badge variant="secondary">
             {rule.type}
-          </Chip>
+          </Badge>
           {/* 显示附加参数 */}
           <div className="flex gap-1">
             {rule.additionalParams &&
               rule.additionalParams.length > 0 &&
               rule.additionalParams.map((param, idx) => (
-                <Chip key={idx} size="sm" variant="flat" color="secondary">
+                <Badge key={idx} variant="outline">
                   {param}
-                </Chip>
+                </Badge>
               ))}
           </div>
         </div>
@@ -454,36 +473,33 @@ const RuleListItemBase: React.FC<RuleListItemProps> = ({
           {rule.type === 'MATCH' ? rule.proxy : rule.payload}
         </div>
         {rule.proxy && rule.type !== 'MATCH' && (
-          <div className={`text-sm text-foreground-500 truncate ${textStyleClass}`}>
+          <div className={`text-sm text-muted-foreground truncate ${textStyleClass}`}>
             {rule.proxy}
           </div>
         )}
       </div>
       <div className="flex gap-1">
         <Button
-          size="sm"
-          variant="light"
-          onPress={() => originalIndex !== -1 && onMoveUp(originalIndex)}
-          isIconOnly
-          isDisabled={originalIndex === -1 || originalIndex === 0 || isDeleted}
+          size="icon-xs"
+          variant="ghost"
+          onClick={() => originalIndex !== -1 && onMoveUp(originalIndex)}
+          disabled={originalIndex === -1 || originalIndex === 0 || isDeleted}
         >
           <IoMdArrowUp className="text-lg" />
         </Button>
         <Button
-          size="sm"
-          variant="light"
-          onPress={() => originalIndex !== -1 && onMoveDown(originalIndex)}
-          isIconOnly
-          isDisabled={originalIndex === -1 || originalIndex === rulesLength - 1 || isDeleted}
+          size="icon-xs"
+          variant="ghost"
+          onClick={() => originalIndex !== -1 && onMoveDown(originalIndex)}
+          disabled={originalIndex === -1 || originalIndex === rulesLength - 1 || isDeleted}
         >
           <IoMdArrowDown className="text-lg" />
         </Button>
         <Button
-          size="sm"
-          color={originalIndex !== -1 && isDeleted ? 'success' : 'danger'}
-          variant="light"
-          onPress={() => originalIndex !== -1 && onRemove(originalIndex)}
-          isIconOnly
+          size="icon-xs"
+          variant={originalIndex !== -1 && isDeleted ? 'ghost' : 'ghost'}
+          className={originalIndex !== -1 && isDeleted ? 'text-green-500 hover:text-green-600' : 'text-destructive hover:text-destructive/80'}
+          onClick={() => originalIndex !== -1 && onRemove(originalIndex)}
         >
           {originalIndex !== -1 && isDeleted ? (
             <IoMdUndo className="text-lg" />
@@ -1172,91 +1188,137 @@ const EditRulesModal: React.FC<Props> = (props) => {
   }
 
   return (
-    <Modal
-      backdrop="blur"
-      classNames={{ backdrop: 'top-[48px]' }}
-      size="5xl"
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={onClose}
-      scrollBehavior="inside"
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
     >
-      <ModalContent className="h-full w-[calc(100%-100px)]">
-        <ModalHeader className="flex pb-0 app-drag">
-          <div className="flex justify-start">
-            <div className="flex items-center">{t('profile.editRules.title')}</div>
-          </div>
-        </ModalHeader>
-        <ModalBody className="h-full">
+      <DialogContent
+        className="h-[calc(100vh-100px)] w-[calc(100vw-24px)] sm:w-[calc(100vw-80px)] max-w-none sm:max-w-none flex flex-col"
+        showCloseButton={false}
+      >
+        <DialogHeader className="pb-0 app-drag">
+          <DialogTitle>{t('profile.editRules.title')}</DialogTitle>
+        </DialogHeader>
+        <div className="h-full overflow-hidden">
           <div className="flex gap-4 h-full">
             {/* 左侧面板 - 规则表单 */}
             <div className="w-1/3 flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <Select
-                  label={t('profile.editRules.ruleType')}
-                  selectedKeys={[newRule.type]}
-                  onSelectionChange={(keys) => {
-                    const selected = Array.from(keys)[0] as string
-                    handleRuleTypeChange(selected)
-                  }}
-                >
-                  {ruleTypes.map((type) => (
-                    <SelectItem key={type}>{type}</SelectItem>
-                  ))}
-                </Select>
+                <div className="flex flex-col gap-1.5">
+                  <Label>{t('profile.editRules.ruleType')}</Label>
+                  <Select
+                    value={newRule.type}
+                    onValueChange={(value) => handleRuleTypeChange(value)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="max-h-60"
+                      style={{ maxHeight: 240 }}
+                      position="popper"
+                    >
+                      {ruleTypes.map((type) => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Input
-                  label={t('profile.editRules.payload')}
-                  placeholder={
-                    getRuleExample(newRule.type) || t('profile.editRules.payloadPlaceholder')
-                  }
-                  value={newRule.payload}
-                  onValueChange={(value) => setNewRule({ ...newRule, payload: value })}
-                  isDisabled={newRule.type === 'MATCH'}
-                  color={
-                    newRule.payload && newRule.type !== 'MATCH' && !isPayloadValid
-                      ? 'danger'
-                      : 'default'
-                  }
-                />
+                <div className="flex flex-col gap-1.5">
+                  <Label>{t('profile.editRules.payload')}</Label>
+                  <Input
+                    placeholder={
+                      getRuleExample(newRule.type) || t('profile.editRules.payloadPlaceholder')
+                    }
+                    value={newRule.payload}
+                    onChange={(e) => setNewRule({ ...newRule, payload: e.target.value })}
+                    disabled={newRule.type === 'MATCH'}
+                    className={cn(
+                      newRule.payload && newRule.type !== 'MATCH' && !isPayloadValid
+                        ? 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50'
+                        : ''
+                    )}
+                  />
+                </div>
 
-                <Autocomplete
-                  label={t('profile.editRules.proxy')}
-                  placeholder={t('profile.editRules.proxyPlaceholder')}
-                  selectedKey={newRule.proxy}
-                  onSelectionChange={(key) => setNewRule({ ...newRule, proxy: key as string })}
-                  inputValue={newRule.proxy}
-                  onInputChange={(value) => setNewRule({ ...newRule, proxy: value })}
-                >
-                  {proxyGroups.map((group) => (
-                    <AutocompleteItem key={group} textValue={group}>
-                      {group}
-                    </AutocompleteItem>
-                  ))}
-                </Autocomplete>
+                <div className="flex flex-col gap-1.5">
+                  <Label>{t('profile.editRules.proxy')}</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between font-normal"
+                      >
+                        <span className="truncate">
+                          {newRule.proxy || t('profile.editRules.proxyPlaceholder')}
+                        </span>
+                        <ChevronsUpDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="p-0"
+                      align="start"
+                      style={{ width: 'var(--radix-popper-anchor-width)' }}
+                    >
+                      <Command>
+                        <CommandInput placeholder={t('profile.editRules.proxyPlaceholder')} />
+                        <CommandList>
+                          <CommandEmpty>No results</CommandEmpty>
+                          <CommandGroup>
+                            {proxyGroups.map((group) => (
+                              <CommandItem
+                                key={group}
+                                value={group}
+                                onSelect={(value) => setNewRule({ ...newRule, proxy: value })}
+                              >
+                                {group}
+                                <CheckIcon
+                                  className={cn(
+                                    'ml-auto size-4',
+                                    newRule.proxy === group ? 'opacity-100' : 'opacity-0'
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
 
                 {/* 附加参数 */}
                 {(isRuleSupportsNoResolve(newRule.type) || isRuleSupportsSrc(newRule.type)) && (
                   <>
-                    <Divider className="my-2" />
+                    <Separator className="my-2" />
                     <div className="flex flex-col gap-2">
                       {isRuleSupportsNoResolve(newRule.type) && (
-                        <Checkbox
-                          isSelected={newRule.additionalParams?.includes('no-resolve') || false}
-                          onValueChange={(checked) =>
-                            handleAdditionalParamChange('no-resolve', checked)
-                          }
-                        >
-                          {t('profile.editRules.noResolve')}
-                        </Checkbox>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="no-resolve"
+                            checked={newRule.additionalParams?.includes('no-resolve') || false}
+                            onCheckedChange={(checked) =>
+                              handleAdditionalParamChange('no-resolve', !!checked)
+                            }
+                          />
+                          <Label htmlFor="no-resolve">{t('profile.editRules.noResolve')}</Label>
+                        </div>
                       )}
                       {isRuleSupportsSrc(newRule.type) && (
-                        <Checkbox
-                          isSelected={newRule.additionalParams?.includes('src') || false}
-                          onValueChange={(checked) => handleAdditionalParamChange('src', checked)}
-                        >
-                          {t('profile.editRules.src')}
-                        </Checkbox>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="src"
+                            checked={newRule.additionalParams?.includes('src') || false}
+                            onCheckedChange={(checked) =>
+                              handleAdditionalParamChange('src', !!checked)
+                            }
+                          />
+                          <Label htmlFor="src">{t('profile.editRules.src')}</Label>
+                        </div>
                       )}
                     </div>
                   </>
@@ -1264,30 +1326,28 @@ const EditRulesModal: React.FC<Props> = (props) => {
 
                 <div className="flex flex-col gap-2">
                   <Button
-                    color="primary"
-                    onPress={() => handleAddRule('prepend')}
-                    isDisabled={isAddRuleDisabled(newRule, validateRulePayload)}
-                    startContent={<MdVerticalAlignTop className="text-lg" />}
+                    onClick={() => handleAddRule('prepend')}
+                    disabled={isAddRuleDisabled(newRule, validateRulePayload)}
                   >
+                    <MdVerticalAlignTop className="text-lg" />
                     {t('profile.editRules.addRulePrepend')}
                   </Button>
                   <Button
-                    color="primary"
-                    variant="bordered"
-                    onPress={() => handleAddRule('append')}
-                    isDisabled={isAddRuleDisabled(newRule, validateRulePayload)}
-                    startContent={<MdVerticalAlignBottom className="text-lg" />}
+                    variant="outline"
+                    onClick={() => handleAddRule('append')}
+                    disabled={isAddRuleDisabled(newRule, validateRulePayload)}
                   >
+                    <MdVerticalAlignBottom className="text-lg" />
                     {t('profile.editRules.addRuleAppend')}
                   </Button>
                 </div>
               </div>
 
-              <div className="flex-1 border-t border-divider pt-4">
+              <div className="flex-1 border-t pt-4">
                 <h3 className="text-lg font-semibold mb-2">
                   {t('profile.editRules.instructions')}
                 </h3>
-                <div className="text-sm text-foreground-500">
+                <div className="text-sm text-muted-foreground">
                   <p className="mb-2">{t('profile.editRules.instructions1')}</p>
                   <p className="mb-2">{t('profile.editRules.instructions2')}</p>
                   <p>{t('profile.editRules.instructions3')}</p>
@@ -1296,24 +1356,24 @@ const EditRulesModal: React.FC<Props> = (props) => {
             </div>
 
             {/* 右侧面板 - 规则列表 */}
-            <div className="w-2/3 border-l border-divider pl-4 flex flex-col">
+            <div className="w-2/3 border-l pl-4 flex flex-col">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-lg font-semibold">{t('profile.editRules.currentRules')}</h3>
                 <Input
-                  size="sm"
                   placeholder={t('profile.editRules.searchPlaceholder')}
-                  className="w-1/3"
+                  className="w-1/3 h-8"
                   value={searchTerm}
-                  onValueChange={setSearchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2 max-h-[calc(100vh-200px)] overflow-y-auto flex-1">
                 {isLoading ? (
-                  <div className="flex items-center justify-center h-full py-8">
-                    <Spinner size="lg" label={t('common.loading') || 'Loading...'} />
+                  <div className="flex flex-col items-center justify-center h-full py-8 gap-2">
+                    <Spinner className="size-8" />
+                    <span className="text-sm text-muted-foreground">{t('common.loading') || 'Loading...'}</span>
                   </div>
                 ) : filteredRules.length === 0 ? (
-                  <div className="text-center text-foreground-500 py-4">
+                  <div className="text-center text-muted-foreground py-4">
                     {rules.length === 0
                       ? t('profile.editRules.noRules')
                       : searchTerm
@@ -1345,24 +1405,24 @@ const EditRulesModal: React.FC<Props> = (props) => {
               </div>
             </div>
           </div>
-        </ModalBody>
-        <ModalFooter className="pt-0">
+        </div>
+        <DialogFooter className="pt-0">
           <Button
             size="sm"
-            variant="light"
-            onPress={() => {
+            variant="ghost"
+            onClick={() => {
               setDeletedRules(new Set()) // 清除删除状态
               onClose()
             }}
           >
             {t('common.cancel')}
           </Button>
-          <Button size="sm" color="primary" onPress={handleSave}>
+          <Button size="sm" onClick={handleSave}>
             {t('common.save')}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

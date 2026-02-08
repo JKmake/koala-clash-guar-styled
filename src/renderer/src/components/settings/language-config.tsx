@@ -1,7 +1,13 @@
 import React from 'react'
 import SettingCard from '../base/base-setting-card'
 import SettingItem from '../base/base-setting-item'
-import { Select, SelectItem } from '@heroui/react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@renderer/components/ui/select'
 import { useLanguage } from '@renderer/hooks/use-language'
 
 const LanguageConfig: React.FC = () => {
@@ -11,21 +17,21 @@ const LanguageConfig: React.FC = () => {
     <SettingCard>
       <SettingItem title={t('settings.appearance.language')}>
         <Select
-          size="sm"
-          className="w-[200px]"
-          selectedKeys={[currentLanguage]}
-          onSelectionChange={(keys) => {
-            const selected = Array.from(keys)[0] as 'zh-CN' | 'en-US' | 'ru-RU'
-            if (selected) {
-              changeLanguage(selected)
-            }
+          value={currentLanguage}
+          onValueChange={(value) => {
+            changeLanguage(value as 'zh-CN' | 'en-US' | 'ru-RU')
           }}
         >
-          {languages.map((lang) => (
-            <SelectItem key={lang.value}>
-              {lang.nativeLabel}
-            </SelectItem>
-          ))}
+          <SelectTrigger size="sm" className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {languages.map((lang) => (
+              <SelectItem key={lang.value} value={lang.value}>
+                {lang.nativeLabel}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </SettingItem>
     </SettingCard>

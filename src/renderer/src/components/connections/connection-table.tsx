@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState, useCallback } from 'react'
-import { Button, Chip } from '@heroui/react'
+import { Badge } from '@renderer/components/ui/badge'
+import { Button } from '@renderer/components/ui/button'
 import { calcTraffic } from '@renderer/utils/calc'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -214,17 +215,18 @@ const ConnectionTable: React.FC<Props> = ({
   const [sortColumn, setSortColumn] = useState<string | null>(initialSortColumn || null)
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(initialSortDirection || 'asc')
 
-  // 状态列渲染函数
   const renderStatus = useCallback(
     (conn: ControllerConnectionDetail) => (
-      <Chip color={conn.isActive ? 'primary' : 'danger'} size="sm" radius="sm" variant="dot">
+      <Badge variant="outline" className="rounded-sm gap-1.5">
+        <span
+          className={`size-1.5 rounded-full ${conn.isActive ? 'bg-primary' : 'bg-destructive'}`}
+        />
         {conn.isActive ? t('connections.active') : t('connections.closed')}
-      </Chip>
+      </Badge>
     ),
     [t]
   )
 
-  // 连接类型渲染函数
   const renderType = useCallback(
     (conn: ControllerConnectionDetail) => (
       <span className="text-xs">
@@ -234,7 +236,6 @@ const ConnectionTable: React.FC<Props> = ({
     []
   )
 
-  // 翻译标签映射
   const getLabelForColumn = useCallback(
     (key: string): string => {
       const translationMap: Record<string, string> = {
@@ -265,7 +266,6 @@ const ConnectionTable: React.FC<Props> = ({
     [t]
   )
 
-  // 初始化列配置（保留宽度状态）
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
     const widths: Record<string, number> = {}
     DEFAULT_COLUMNS.forEach((col) => {
@@ -274,7 +274,6 @@ const ConnectionTable: React.FC<Props> = ({
     return widths
   })
 
-  // 更新列标签和可见性
   const columnsWithLabels = useMemo(
     () =>
       DEFAULT_COLUMNS.map((col) => ({
@@ -286,7 +285,6 @@ const ConnectionTable: React.FC<Props> = ({
     [getLabelForColumn, visibleColumns, columnWidths]
   )
 
-  // 处理列宽度调整
   const handleMouseDown = useCallback(
     (e: React.MouseEvent, columnKey: string) => {
       e.preventDefault()
@@ -316,7 +314,6 @@ const ConnectionTable: React.FC<Props> = ({
         setResizingColumn(null)
         document.removeEventListener('mousemove', handleMouseMove)
         document.removeEventListener('mouseup', handleMouseUp)
-        // 保存列宽度
         if (onColumnWidthChange) {
           setColumnWidths((currentWidths) => {
             onColumnWidthChange(currentWidths)
@@ -331,7 +328,6 @@ const ConnectionTable: React.FC<Props> = ({
     [onColumnWidthChange]
   )
 
-  // 处理排序
   const handleSort = useCallback(
     (columnKey: string) => {
       let newDirection: 'asc' | 'desc' = 'asc'
@@ -345,7 +341,6 @@ const ConnectionTable: React.FC<Props> = ({
         setSortDirection('asc')
       }
 
-      // 保存排序状态
       if (onSortChange) {
         onSortChange(newColumn, newDirection)
       }
@@ -353,7 +348,6 @@ const ConnectionTable: React.FC<Props> = ({
     [sortColumn, sortDirection, onSortChange]
   )
 
-  // 排序连接
   const sortedConnections = useMemo(() => {
     if (!sortColumn) return connections
 
@@ -380,15 +374,14 @@ const ConnectionTable: React.FC<Props> = ({
 
   return (
     <div className="h-full flex flex-col">
-      {/* 表格容器 */}
       <div ref={tableRef} className="flex-1 overflow-auto">
         <table className="w-full border-collapse">
-          <thead className="sticky top-0 z-10 bg-content2">
+          <thead className="sticky top-0 z-10 bg-muted">
             <tr>
               {visibleColumnsFiltered.map((col) => (
                 <th
                   key={col.key}
-                  className="relative border-b border-divider text-left text-xs font-semibold text-foreground-600 px-3 h-10"
+                  className="relative border-b border-border text-left text-xs font-semibold text-muted-foreground px-3 h-10"
                   style={{ width: col.width, minWidth: col.minWidth }}
                 >
                   <div className="flex items-center justify-between gap-1">
@@ -406,7 +399,7 @@ const ConnectionTable: React.FC<Props> = ({
                       onMouseDown={(e) => handleMouseDown(e, col.key)}
                     >
                       <div
-                        className="w-px h-full bg-divider group-hover:bg-primary transition-colors"
+                        className="w-px h-full bg-border group-hover:bg-primary transition-colors"
                         style={{
                           backgroundColor: resizingColumn === col.key ? 'var(--primary)' : undefined
                         }}
@@ -415,14 +408,14 @@ const ConnectionTable: React.FC<Props> = ({
                   </div>
                 </th>
               ))}
-              <th className="sticky right-0 border-b border-divider w-12 bg-content2" />
+              <th className="sticky right-0 border-b border-border w-12 bg-muted" />
             </tr>
           </thead>
           <tbody>
             {sortedConnections.map((connection) => (
               <tr
                 key={connection.id}
-                className="border-b border-divider hover:bg-content2 cursor-pointer transition-colors h-12"
+                className="border-b border-border hover:bg-muted cursor-pointer transition-colors h-12"
                 onClick={() => {
                   setSelected(connection)
                   setIsDetailModalOpen(true)
@@ -430,7 +423,6 @@ const ConnectionTable: React.FC<Props> = ({
               >
                 {visibleColumnsFiltered.map((col) => {
                   let content: React.ReactNode
-                  // 根据列类型选择渲染方式
                   if (col.key === 'status') {
                     content = renderStatus(connection)
                   } else if (col.key === 'type') {
@@ -458,11 +450,14 @@ const ConnectionTable: React.FC<Props> = ({
                 })}
                 <td className="sticky right-0 bg-inherit" onClick={(e) => e.stopPropagation()}>
                   <Button
-                    color={connection.isActive ? 'warning' : 'danger'}
-                    variant="light"
-                    isIconOnly
-                    size="sm"
-                    onPress={() => {
+                    variant="ghost"
+                    size="icon-sm"
+                    className={
+                      connection.isActive
+                        ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-500/10'
+                        : 'text-destructive hover:text-destructive hover:bg-destructive/10'
+                    }
+                    onClick={() => {
                       close(connection.id)
                     }}
                   >
@@ -478,7 +473,7 @@ const ConnectionTable: React.FC<Props> = ({
           </tbody>
         </table>
         {sortedConnections.length === 0 && (
-          <div className="flex items-center justify-center h-32 text-foreground-400">
+          <div className="flex items-center justify-center h-32 text-muted-foreground">
             {t('connections.table.noData')}
           </div>
         )}

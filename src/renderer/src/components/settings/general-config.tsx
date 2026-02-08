@@ -1,7 +1,10 @@
 import React, { useState } from 'react'
 import SettingCard from '../base/base-setting-card'
 import SettingItem from '../base/base-setting-item'
-import { Button, Switch, Tab, Tabs, Tooltip } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import useSWR from 'swr'
 import { checkAutoRun, disableAutoRun, enableAutoRun, relaunchApp } from '@renderer/utils/ipc'
 import { useAppConfig } from '@renderer/hooks/use-app-config'
@@ -56,10 +59,10 @@ const GeneralConfig: React.FC = () => {
         <SettingItem title={t('settings.general.autoStart')} divider>
           <Switch
             size="sm"
-            isSelected={enable}
-            onValueChange={async (v) => {
+            checked={enable}
+            onCheckedChange={async (value) => {
               try {
-                if (v) {
+                if (value) {
                   await enableAutoRun()
                 } else {
                   await disableAutoRun()
@@ -75,51 +78,54 @@ const GeneralConfig: React.FC = () => {
         <SettingItem title={t('settings.general.silentStart')} divider>
           <Switch
             size="sm"
-            isSelected={silentStart}
-            onValueChange={(v) => {
-              patchAppConfig({ silentStart: v })
+            checked={silentStart}
+            onCheckedChange={(value) => {
+              patchAppConfig({ silentStart: value })
             }}
           />
         </SettingItem>
         <SettingItem title={t('settings.general.autoCheckUpdate')} divider>
           <Switch
             size="sm"
-            isSelected={autoCheckUpdate}
-            onValueChange={(v) => {
-              patchAppConfig({ autoCheckUpdate: v })
+            checked={autoCheckUpdate}
+            onCheckedChange={(value) => {
+              patchAppConfig({ autoCheckUpdate: value })
             }}
           />
         </SettingItem>
         <SettingItem title={t('settings.general.updateChannel')} divider>
           <Tabs
-            size="sm"
-            color="primary"
-            selectedKey={updateChannel}
-            onSelectionChange={async (v) => {
-              patchAppConfig({ updateChannel: v as 'stable' | 'beta' })
+            value={updateChannel}
+            onValueChange={async (value) => {
+              patchAppConfig({ updateChannel: value as 'stable' | 'beta' })
             }}
           >
-            <Tab key="stable" title={t('settings.general.stable')} />
-            <Tab key="beta" title={t('settings.general.beta')} />
+            <TabsList className="h-8">
+              <TabsTrigger value="stable">{t('settings.general.stable')}</TabsTrigger>
+              <TabsTrigger value="beta">{t('settings.general.beta')}</TabsTrigger>
+            </TabsList>
           </Tabs>
         </SettingItem>
 
         <SettingItem
           title={t('settings.general.disableGPU')}
           actions={
-            <Tooltip content={t('settings.general.disableGPUHelp')}>
-              <Button isIconOnly size="sm" variant="light">
-                <IoIosHelpCircle className="text-lg" />
-              </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon-sm" variant="ghost">
+                  <IoIosHelpCircle className="text-lg" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('settings.general.disableGPUHelp')}</TooltipContent>
             </Tooltip>
           }
           divider
         >
           <Switch
             size="sm"
-            isSelected={pendingDisableGPU}
-            onValueChange={(v) => {
-              setPendingDisableGPU(v)
+            checked={pendingDisableGPU}
+            onCheckedChange={(value) => {
+              setPendingDisableGPU(value)
               setShowRestartConfirm(true)
             }}
           />
@@ -127,18 +133,21 @@ const GeneralConfig: React.FC = () => {
         <SettingItem
           title={t('settings.general.disableAnimation')}
           actions={
-            <Tooltip content={t('settings.general.disableAnimationHelp')}>
-              <Button isIconOnly size="sm" variant="light">
-                <IoIosHelpCircle className="text-lg" />
-              </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="icon-sm" variant="ghost">
+                  <IoIosHelpCircle className="text-lg" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t('settings.general.disableAnimationHelp')}</TooltipContent>
             </Tooltip>
           }
         >
           <Switch
             size="sm"
-            isSelected={disableAnimation}
-            onValueChange={(v) => {
-              patchAppConfig({ disableAnimation: v })
+            checked={disableAnimation}
+            onCheckedChange={(value) => {
+              patchAppConfig({ disableAnimation: value })
             }}
           />
         </SettingItem>

@@ -33,6 +33,7 @@
     "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.19",
     "express": "^5.2.1",

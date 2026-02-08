@@ -1,6 +1,9 @@
-import { Button, Input, Switch, Tab, Tabs } from '@heroui/react'
 import SettingCard from '@renderer/components/base/base-setting-card'
 import SettingItem from '@renderer/components/base/base-setting-item'
+import { Button } from '@renderer/components/ui/button'
+import { Input } from '@renderer/components/ui/input'
+import { Switch } from '@renderer/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs'
 import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 import { mihomoUpgradeGeo } from '@renderer/utils/ipc'
 import { useState, useEffect, useMemo } from 'react'
@@ -46,16 +49,19 @@ const GeoData: React.FC = () => {
           {geoipInput !== geoxUrl.geoip && (
             <Button
               size="sm"
-              color="primary"
               className="mr-2"
-              onPress={() => {
+              onClick={() => {
                 patchControledMihomoConfig({ 'geox-url': { ...geoxUrl, geoip: geoipInput } })
               }}
             >
               {t('common.confirm')}
             </Button>
           )}
-          <Input size="sm" value={geoipInput} onValueChange={setGeoIpInput} />
+          <Input
+            className="h-8"
+            value={geoipInput}
+            onChange={(event) => setGeoIpInput(event.target.value)}
+          />
         </div>
       </SettingItem>
       <SettingItem title={t('resources.geositeDatabase')} divider>
@@ -63,16 +69,19 @@ const GeoData: React.FC = () => {
           {geositeInput !== geoxUrl.geosite && (
             <Button
               size="sm"
-              color="primary"
               className="mr-2"
-              onPress={() => {
+              onClick={() => {
                 patchControledMihomoConfig({ 'geox-url': { ...geoxUrl, geosite: geositeInput } })
               }}
             >
               {t('common.confirm')}
             </Button>
           )}
-          <Input size="sm" value={geositeInput} onValueChange={setGeositeInput} />
+          <Input
+            className="h-8"
+            value={geositeInput}
+            onChange={(event) => setGeositeInput(event.target.value)}
+          />
         </div>
       </SettingItem>
       <SettingItem title={t('resources.mmdbDatabase')} divider>
@@ -80,16 +89,19 @@ const GeoData: React.FC = () => {
           {mmdbInput !== geoxUrl.mmdb && (
             <Button
               size="sm"
-              color="primary"
               className="mr-2"
-              onPress={() => {
+              onClick={() => {
                 patchControledMihomoConfig({ 'geox-url': { ...geoxUrl, mmdb: mmdbInput } })
               }}
             >
               {t('common.confirm')}
             </Button>
           )}
-          <Input size="sm" value={mmdbInput} onValueChange={setMmdbInput} />
+          <Input
+            className="h-8"
+            value={mmdbInput}
+            onChange={(event) => setMmdbInput(event.target.value)}
+          />
         </div>
       </SettingItem>
       <SettingItem title={t('resources.asnDatabase')} divider>
@@ -97,39 +109,41 @@ const GeoData: React.FC = () => {
           {asnInput !== geoxUrl.asn && (
             <Button
               size="sm"
-              color="primary"
               className="mr-2"
-              onPress={() => {
+              onClick={() => {
                 patchControledMihomoConfig({ 'geox-url': { ...geoxUrl, asn: asnInput } })
               }}
             >
               {t('common.confirm')}
             </Button>
           )}
-          <Input size="sm" value={asnInput} onValueChange={setAsnInput} />
+          <Input
+            className="h-8"
+            value={asnInput}
+            onChange={(event) => setAsnInput(event.target.value)}
+          />
         </div>
       </SettingItem>
       <SettingItem title={t('resources.geoipDataMode')} divider>
         <Tabs
-          size="sm"
-          color="primary"
-          selectedKey={geoMode ? 'dat' : 'db'}
-          onSelectionChange={(key) => {
-            patchControledMihomoConfig({ 'geodata-mode': key === 'dat' })
+          value={geoMode ? 'dat' : 'db'}
+          onValueChange={(value) => {
+            patchControledMihomoConfig({ 'geodata-mode': value === 'dat' })
           }}
         >
-          <Tab key="db" title="db" />
-          <Tab key="dat" title="dat" />
+          <TabsList className="h-8">
+            <TabsTrigger value="db">db</TabsTrigger>
+            <TabsTrigger value="dat">dat</TabsTrigger>
+          </TabsList>
         </Tabs>
       </SettingItem>
       <SettingItem
         title={t('resources.autoUpdateGeoData')}
         actions={
           <Button
-            size="sm"
-            isIconOnly
-            variant="light"
-            onPress={async () => {
+            size="icon-sm"
+            variant="ghost"
+            onClick={async () => {
               setUpdating(true)
               try {
                 await mihomoUpgradeGeo()
@@ -148,21 +162,22 @@ const GeoData: React.FC = () => {
       >
         <Switch
           size="sm"
-          isSelected={geoAutoUpdate}
-          onValueChange={(v) => {
-            patchControledMihomoConfig({ 'geo-auto-update': v })
+          checked={geoAutoUpdate}
+          onCheckedChange={(value) => {
+            patchControledMihomoConfig({ 'geo-auto-update': value })
           }}
         />
       </SettingItem>
       {geoAutoUpdate && (
         <SettingItem title={t('resources.updateInterval')}>
           <Input
-            size="sm"
             type="number"
-            className="w-[100px]"
+            className="w-[100px] h-8"
             value={geoUpdateInterval.toString()}
-            onValueChange={(v) => {
-              patchControledMihomoConfig({ 'geo-update-interval': parseInt(v) })
+            onChange={(event) => {
+              patchControledMihomoConfig({
+                'geo-update-interval': parseInt(event.target.value)
+              })
             }}
           />
         </SettingItem>

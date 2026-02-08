@@ -20,7 +20,6 @@ import MihomoIcon from './components/base/mihomo-icon'
 import useSWR from 'swr'
 import ConfirmModal from '@renderer/components/base/base-confirm'
 import MainCard from '@renderer/components/sider/main-card'
-import { Separator } from '@renderer/components/ui/separator'
 import { Button } from '@renderer/components/ui/button'
 
 let navigate: NavigateFunction
@@ -251,7 +250,6 @@ const App: React.FC = () => {
           </Button>
         </div>
       </div>
-      <Separator orientation="vertical" />
       <div
         style={{ width: `calc(100% - ${narrowWidth + 1}px)` }}
         className="main grow h-full overflow-y-auto"

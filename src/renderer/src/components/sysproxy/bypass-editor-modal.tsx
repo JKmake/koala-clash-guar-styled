@@ -2,9 +2,15 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import yaml from 'js-yaml'
-import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@renderer/components/ui/dialog'
+import { Button } from '@renderer/components/ui/button'
 import { BaseEditor } from '../base/base-editor-lazy'
-import { useAppConfig } from '@renderer/hooks/use-app-config'
 
 interface Props {
   bypass: string[]
@@ -19,7 +25,6 @@ interface ParsedYaml {
 const ByPassEditorModal: React.FC<Props> = (props) => {
   const { t } = useTranslation()
   const { bypass, onCancel, onConfirm } = props
-  const { appConfig: { disableAnimation = false } = {} } = useAppConfig()
   const [currData, setCurrData] = useState<string>('')
   useEffect(() => {
     setCurrData(yaml.dump({ bypass }))
@@ -38,40 +43,36 @@ const ByPassEditorModal: React.FC<Props> = (props) => {
   }
 
   return (
-    <Modal
-      backdrop={disableAnimation ? 'transparent' : 'blur'}
-      disableAnimation={disableAnimation}
-      classNames={{
-        base: 'max-w-none w-full',
-        backdrop: 'top-[48px]'
+    <Dialog
+      open={true}
+      onOpenChange={(open) => {
+        if (!open) onCancel()
       }}
-      size="5xl"
-      hideCloseButton
-      isOpen={true}
-      onOpenChange={onCancel}
-      scrollBehavior="inside"
     >
-      <ModalContent className="h-full w-[calc(100%-100px)]">
-        <ModalHeader className="flex pb-0 app-drag">
-          {t('sysproxy.bypassEditorTitle')}
-        </ModalHeader>
-        <ModalBody className="h-full">
+      <DialogContent
+        className="h-full w-[calc(100%-100px)] max-w-none sm:max-w-none flex flex-col"
+        showCloseButton={false}
+      >
+        <DialogHeader className="app-drag pb-0">
+          <DialogTitle>{t('sysproxy.bypassEditorTitle')}</DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 min-h-0">
           <BaseEditor
             language="yaml"
             value={currData}
             onChange={(value) => setCurrData(value || '')}
           />
-        </ModalBody>
-        <ModalFooter className="pt-0">
-          <Button size="sm" variant="light" onPress={onCancel}>
+        </div>
+        <DialogFooter className="pt-0">
+          <Button size="sm" variant="ghost" onClick={onCancel}>
             {t('common.cancel')}
           </Button>
-          <Button size="sm" color="primary" onPress={handleConfirm}>
+          <Button size="sm" onClick={handleConfirm}>
             {t('common.confirm')}
           </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

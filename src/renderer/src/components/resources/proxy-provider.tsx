@@ -9,7 +9,8 @@ import Viewer from './viewer'
 import useSWR from 'swr'
 import SettingCard from '../base/base-setting-card'
 import SettingItem from '../base/base-setting-item'
-import { Button, Chip } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import { Badge } from '@renderer/components/ui/badge'
 import { IoMdRefresh } from 'react-icons/io'
 import { CgLoadbarDoc } from 'react-icons/cg'
 import { MdEditDocument } from 'react-icons/md'
@@ -110,8 +111,7 @@ const ProxyProvider: React.FC = () => {
       <SettingItem title={t('resources.proxyProvider')} divider>
         <Button
           size="sm"
-          color="primary"
-          onPress={() => {
+          onClick={() => {
             providers.forEach((provider, index) => {
               onUpdate(provider.name, index)
             })
@@ -125,25 +125,22 @@ const ProxyProvider: React.FC = () => {
           <SettingItem
             title={provider.name}
             actions={
-              <Chip className="ml-2" size="sm">
+              <Badge className="ml-2">
                 {provider.proxies?.length || 0}
-              </Chip>
+              </Badge>
             }
             divider={!provider.subscriptionInfo && index !== providers.length - 1}
           >
             <div className="flex h-[32px] leading-[32px] text-foreground-500">
               <div>{dayjs(provider.updatedAt).fromNow()}</div>
-              {/* <Button isIconOnly className="ml-2" size="sm">
-                <IoMdEye className="text-lg" />
-              </Button> */}
               <Button
-                isIconOnly
                 title={
                   provider.vehicleType == 'File' ? t('resources.edit') : t('resources.view')
                 }
                 className="ml-2"
-                size="sm"
-                onPress={() => {
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => {
                   setShowDetails({
                     show: false,
                     privderType: 'proxy-providers',
@@ -160,11 +157,11 @@ const ProxyProvider: React.FC = () => {
                 )}
               </Button>
               <Button
-                isIconOnly
                 title={t('common.update')}
                 className="ml-2"
-                size="sm"
-                onPress={() => {
+                size="icon-sm"
+                variant="ghost"
+                onClick={() => {
                   onUpdate(provider.name, index)
                 }}
               >

@@ -1,4 +1,6 @@
-import { Button, Input, Switch } from '@heroui/react'
+import { Button } from '@renderer/components/ui/button'
+import { Input } from '@renderer/components/ui/input'
+import { Switch } from '@renderer/components/ui/switch'
 import BasePage from '@renderer/components/base/base-page'
 import SettingCard from '@renderer/components/base/base-setting-card'
 import SettingItem from '@renderer/components/base/base-setting-item'
@@ -86,8 +88,7 @@ const Sniffer: React.FC = () => {
           <Button
             size="sm"
             className="app-nodrag"
-            color="primary"
-            onPress={() =>
+            onClick={() =>
               onSave({
                 sniffer: {
                   'parse-pure-ip': values.parsePureIP,
@@ -109,16 +110,16 @@ const Sniffer: React.FC = () => {
         <SettingItem title={t('pages.sniffer.overrideConnectionAddress')} divider>
           <Switch
             size="sm"
-            isSelected={values.overrideDestination}
-            onValueChange={(v) => {
+            checked={values.overrideDestination}
+            onCheckedChange={(value) => {
               setValues({
                 ...values,
-                overrideDestination: v,
+                overrideDestination: value,
                 sniff: {
                   ...values.sniff,
                   HTTP: {
                     ...values.sniff.HTTP,
-                    'override-destination': v,
+                    'override-destination': value,
                     ports: values.sniff.HTTP?.ports || [80, 443]
                   }
                 }
@@ -129,46 +130,43 @@ const Sniffer: React.FC = () => {
         <SettingItem title={t('pages.sniffer.sniffRealIPMapping')} divider>
           <Switch
             size="sm"
-            isSelected={values.forceDNSMapping}
-            onValueChange={(v) => {
-              setValues({ ...values, forceDNSMapping: v })
+            checked={values.forceDNSMapping}
+            onCheckedChange={(value) => {
+              setValues({ ...values, forceDNSMapping: value })
             }}
           />
         </SettingItem>
         <SettingItem title={t('pages.sniffer.sniffUnmappedIP')} divider>
           <Switch
             size="sm"
-            isSelected={values.parsePureIP}
-            onValueChange={(v) => {
-              setValues({ ...values, parsePureIP: v })
+            checked={values.parsePureIP}
+            onCheckedChange={(value) => {
+              setValues({ ...values, parsePureIP: value })
             }}
           />
         </SettingItem>
         <SettingItem title={t('pages.sniffer.httpPortSniffer')} divider>
           <Input
-            size="sm"
             className="w-[50%]"
             placeholder={t('pages.sniffer.portPlaceholder')}
             value={values.sniff.HTTP?.ports.join(',')}
-            onValueChange={(v) => handleSniffPortChange('HTTP', v)}
+            onChange={(event) => handleSniffPortChange('HTTP', event.target.value)}
           />
         </SettingItem>
         <SettingItem title={t('pages.sniffer.tlsPortSniffer')} divider>
           <Input
-            size="sm"
             className="w-[50%]"
             placeholder={t('pages.sniffer.portPlaceholder')}
             value={values.sniff.TLS?.ports.join(',')}
-            onValueChange={(v) => handleSniffPortChange('TLS', v)}
+            onChange={(event) => handleSniffPortChange('TLS', event.target.value)}
           />
         </SettingItem>
         <SettingItem title={t('pages.sniffer.quicPortSniffer')} divider>
           <Input
-            size="sm"
             className="w-[50%]"
             placeholder={t('pages.sniffer.portPlaceholder')}
             value={values.sniff.QUIC?.ports.join(',')}
-            onValueChange={(v) => handleSniffPortChange('QUIC', v)}
+            onChange={(event) => handleSniffPortChange('QUIC', event.target.value)}
           />
         </SettingItem>
         <EditableList
