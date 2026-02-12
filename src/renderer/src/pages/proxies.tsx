@@ -221,7 +221,7 @@ const Proxies: React.FC = () => {
       }
       return groups[index] ? (
         <div
-          className={`w-full pt-2 ${index === groupCounts.length - 1 && !isOpen[index] ? 'pb-2' : ''} px-2`}
+          className={`w-full ${index > 0 ? 'pt-2' : ''} ${index === groupCounts.length - 1 && !isOpen[index] ? 'pb-2' : ''} px-2`}
         >
           <Card
             className="w-full cursor-pointer py-0 transition-colors hover:bg-accent/50"
@@ -411,7 +411,7 @@ const Proxies: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="h-[calc(100vh-50px)]">
+        <div className="h-[calc(100vh-58px)]">
           <GroupedVirtuoso
             ref={virtuosoRef}
             groupCounts={groupCounts}

@@ -134,7 +134,7 @@ const Home: React.FC = () => {
 
   return (
     <BasePage>
-      <div className="flex flex-col h-full px-4 py-2 gap-4">
+      <div className="flex flex-col h-full px-2 pb-2 gap-4">
         {/* Profile card */}
         {currentProfile && (
           <div className="rounded-xl border border-border bg-card/50 backdrop-blur p-4">

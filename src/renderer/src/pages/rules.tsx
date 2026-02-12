@@ -45,7 +45,7 @@ const Rules: React.FC = () => {
       }
     >
       <div className="sticky top-0 z-40">
-        <div className="flex p-2">
+        <div className="flex px-2 pb-2">
           <Input
             className="h-8 text-sm"
             value={filter}
@@ -55,7 +55,7 @@ const Rules: React.FC = () => {
         </div>
         <Separator />
       </div>
-      <div className="h-[calc(100vh-100px)] mt-px">
+      <div className="h-[calc(100vh-108px)] mt-px">
         <Virtuoso
           data={filteredRules}
           itemContent={(i, rule) => (

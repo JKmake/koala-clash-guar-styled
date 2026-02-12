@@ -1,22 +1,16 @@
 import { Button } from '@renderer/components/ui/button'
-import { Checkbox } from '@renderer/components/ui/checkbox'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@renderer/components/ui/dropdown-menu'
-import { Input } from '@renderer/components/ui/input'
-import { Separator } from '@renderer/components/ui/separator'
-import { Spinner } from '@renderer/components/ui/spinner'
 import BasePage from '@renderer/components/base/base-page'
 import ProfileItem from '@renderer/components/profiles/profile-item'
 import EditInfoModal from '@renderer/components/profiles/edit-info-modal'
 import { useProfileConfig } from '@renderer/hooks/use-profile-config'
 import { getFilePath, readTextFile } from '@renderer/utils/ipc'
-import type { KeyboardEvent } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { MdContentPaste } from 'react-icons/md'
+import { useEffect, useRef, useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -26,11 +20,11 @@ import {
   DragEndEvent
 } from '@dnd-kit/core'
 import { SortableContext } from '@dnd-kit/sortable'
-import { FaPlus } from 'react-icons/fa6'
 import { IoMdRefresh } from 'react-icons/io'
 import { MdTune } from 'react-icons/md'
 import ProfileSettingModal from '@renderer/components/profiles/profile-setting-modal'
 import { useTranslation } from 'react-i18next'
+import { Plus } from 'lucide-react'
 
 const emptyItems: ProfileItem[] = []
 
@@ -48,16 +42,12 @@ const Profiles: React.FC = () => {
   const { current, items } = profileConfig || {}
   const itemsArray = items ?? emptyItems
   const [sortedItems, setSortedItems] = useState(itemsArray)
-  const [useProxy, setUseProxy] = useState(false)
-  const [importing, setImporting] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [switching, setSwitching] = useState(false)
   const [fileOver, setFileOver] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<ProfileItem | null>(null)
-  const [url, setUrl] = useState('')
-  const isUrlEmpty = url.trim() === ''
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -65,12 +55,6 @@ const Profiles: React.FC = () => {
       }
     })
   )
-  const handleImport = async (importUrl: string): Promise<void> => {
-    setImporting(true)
-    await addProfileItem({ name: '', type: 'remote', url: importUrl, useProxy, autoUpdate: true })
-    setUrl('')
-    setImporting(false)
-  }
   const pageRef = useRef<HTMLDivElement>(null)
 
   const onDragEnd = async (event: DragEndEvent): Promise<void> => {
@@ -87,14 +71,6 @@ const Profiles: React.FC = () => {
       }
     }
   }
-
-  const handleInputKeyUp = useCallback(
-    (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key !== 'Enter' || isUrlEmpty) return
-      handleImport((e.currentTarget as HTMLInputElement).value)
-    },
-    [isUrlEmpty]
-  )
 
   useEffect(() => {
     pageRef.current?.addEventListener('dragover', (e) => {
@@ -189,6 +165,24 @@ const Profiles: React.FC = () => {
       title={t('pages.profiles.title')}
       header={
         <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="new-profile" variant='ghost' size="icon-sm">
+                <Plus />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => handleMenuAction('open')}>
+                {t('pages.profiles.openLocalConfig')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleMenuAction('new')}>
+                {t('pages.profiles.newLocalConfig')}
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleMenuAction('import')}>
+                {t('pages.profiles.importRemoteConfig')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             size="icon-sm"
             title={t('pages.profiles.updateAll')}
@@ -240,70 +234,10 @@ const Profiles: React.FC = () => {
           }}
         />
       )}
-      <div className="sticky profiles-sticky top-0 z-40 bg-background">
-        <div className="flex flex-wrap items-center gap-2 p-2">
-          <div className="flex flex-1 items-center gap-2 min-w-[220px]">
-            <Input
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-              onKeyUp={handleInputKeyUp}
-              className="flex-1"
-            />
-            <Button
-              size="icon-sm"
-              variant="ghost"
-              className="z-10"
-              onClick={() => {
-                navigator.clipboard.readText().then((text) => {
-                  setUrl(text)
-                })
-              }}
-            >
-              <MdContentPaste className="text-lg" />
-            </Button>
-            <label className="flex items-center gap-2 whitespace-nowrap text-sm">
-              <Checkbox
-                checked={useProxy}
-                onCheckedChange={(value) => {
-                  setUseProxy(Boolean(value))
-                }}
-              />
-              <span>{t('common.proxy')}</span>
-            </label>
-          </div>
 
-          <Button
-            size="sm"
-            disabled={isUrlEmpty || importing}
-            onClick={() => handleImport(url)}
-          >
-            {importing && <Spinner className="mr-2 size-4" />}
-            {t('common.import')}
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="new-profile" size="icon-sm">
-                <FaPlus />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onSelect={() => handleMenuAction('open')}>
-                {t('pages.profiles.openLocalConfig')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleMenuAction('new')}>
-                {t('pages.profiles.newLocalConfig')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleMenuAction('import')}>
-                {t('pages.profiles.importRemoteConfig')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        <Separator />
-      </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <div
-          className={`${fileOver ? 'blur-sm' : ''} grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 m-2`}
+          className={`${fileOver ? 'blur-sm' : ''} grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 mx-2 mb-2`}
         >
           <SortableContext
             items={sortedItems.map((item) => {
