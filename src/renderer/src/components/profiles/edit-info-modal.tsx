@@ -12,9 +12,10 @@ import { Switch } from '@renderer/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import { cn } from '@renderer/lib/utils'
 import SettingItem from '../base/base-setting-item'
-import { restartCore } from '@renderer/utils/ipc'
+import { getFilePath, readTextFile, restartCore } from '@renderer/utils/ipc'
 import { IoIosHelpCircle } from 'react-icons/io'
 import { useTranslation } from 'react-i18next'
+import { ClipboardPaste, ChevronDown, FileUp, FilePlus2, Check } from 'lucide-react'
 
 interface Props {
   item: ProfileItem
@@ -23,16 +24,37 @@ interface Props {
   onClose: () => void
 }
 
+function isValidUrl(url: string): boolean {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'http:' || u.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 const EditInfoModal: React.FC<Props> = (props) => {
   const { t } = useTranslation()
   const { item, isCurrent, updateProfileItem, onClose } = props
   const [values, setValues] = useState({ ...item, autoUpdate: item.autoUpdate ?? true })
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [urlTouched, setUrlTouched] = useState(false)
+  const [localFileName, setLocalFileName] = useState<string | null>(null)
   const inputWidth = 'w-[300px] md:w-[300px] lg:w-[500px] xl:w-[700px]'
+
+  const isNew = !item.id
+  const isLocal = values.type === 'local'
+  const urlInvalid = !isLocal && urlTouched && !!values.url && !isValidUrl(values.url)
+
+  const canImport = isNew
+    ? isLocal
+      ? !!values.file
+      : isValidUrl(values.url || '')
+    : true
 
   const onSave = async (): Promise<void> => {
     try {
       const itemToSave = { ...values }
-
       await updateProfileItem(itemToSave)
       if (item.id && isCurrent) {
         await restartCore()
@@ -43,6 +65,59 @@ const EditInfoModal: React.FC<Props> = (props) => {
     }
   }
 
+  const handlePaste = async (): Promise<void> => {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (text) {
+        setValues({ ...values, url: text.trim() })
+        setUrlTouched(true)
+      }
+    } catch {
+      // clipboard access denied
+    }
+  }
+
+  const handleSelectFile = async (): Promise<void> => {
+    try {
+      const files = await getFilePath(['yml', 'yaml'])
+      if (files?.length) {
+        const content = await readTextFile(files[0])
+        const fileName = files[0].split('/').pop()?.split('\\').pop() || ''
+        setLocalFileName(fileName)
+        setValues({
+          ...values,
+          type: 'local',
+          file: content,
+          name: values.name || fileName
+        })
+      }
+    } catch (e) {
+      alert(e)
+    }
+  }
+
+  const handleCreateEmpty = (): void => {
+    setLocalFileName(null)
+    setValues({
+      ...values,
+      type: 'local',
+      file: 'proxies: []\nproxy-groups: []\nrules: []',
+      name: values.name || t('profile.blankSubscription')
+    })
+  }
+
+  const switchToType = (type: 'remote' | 'local'): void => {
+    if (type === values.type) return
+    setValues({
+      ...values,
+      type,
+      url: type === 'local' ? undefined : values.url,
+      file: type === 'remote' ? undefined : values.file
+    })
+    setLocalFileName(null)
+    setUrlTouched(false)
+  }
+
   return (
     <Dialog
       open={true}
@@ -51,109 +126,292 @@ const EditInfoModal: React.FC<Props> = (props) => {
       }}
     >
       <DialogContent
-        className="w-[600px] md:w-[600px] lg:w-[800px] xl:w-[1024px] sm:max-w-none"
+        className={cn(
+          'sm:max-w-none',
+          isNew
+            ? 'w-[480px]'
+            : 'w-[600px] md:w-[600px] lg:w-[800px] xl:w-[1024px]'
+        )}
         showCloseButton={false}
       >
         <DialogHeader className="app-drag">
           <DialogTitle>
-            {item.id ? t('profile.editInfo') : t('profile.importRemoteConfig')}
+            {isNew ? t('profile.importRemoteConfig') : t('profile.editInfo')}
           </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-2 overflow-y-auto max-h-[60vh]">
-          <SettingItem title={t('profile.name')}>
-            <Input
-              className={cn(inputWidth, 'h-8')}
-              value={values.name}
-              onChange={(e) => {
-                setValues({ ...values, name: e.target.value })
-              }}
-            />
-          </SettingItem>
-          {values.type === 'remote' && (
-            <>
-              <SettingItem title={t('profile.subscriptionAddress')}>
-                <Input
-                  className={cn(inputWidth, 'h-8')}
-                  value={values.url}
-                  onChange={(e) => {
-                    setValues({ ...values, url: e.target.value })
-                  }}
-                />
-              </SettingItem>
-              <SettingItem title={t('profile.customUA')}>
-                <Input
-                  className={cn(inputWidth, 'h-8')}
-                  value={values.ua ?? ''}
-                  onChange={(e) => {
-                    setValues({ ...values, ua: e.target.value.trim() || undefined })
-                  }}
-                />
-              </SettingItem>
-              <SettingItem title={t('profile.verifyFormat')}>
-                <Switch
+
+        {isNew ? (
+          <div className="flex flex-col gap-3">
+            {/* URL input or local file picker */}
+            {isLocal ? (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
                   size="sm"
-                  checked={values.verify ?? true}
-                  onCheckedChange={(v) => {
-                    setValues({ ...values, verify: v })
-                  }}
-                />
-              </SettingItem>
-              <SettingItem title={t('profile.useProxyUpdate')}>
-                <Switch
-                  size="sm"
-                  checked={values.useProxy ?? false}
-                  onCheckedChange={(v) => {
-                    setValues({ ...values, useProxy: v })
-                  }}
-                />
-              </SettingItem>
-              <SettingItem title={t('profile.autoUpdate')}>
-                <Switch
-                  size="sm"
-                  checked={values.autoUpdate ?? false}
-                  onCheckedChange={(v) => {
-                    setValues({ ...values, autoUpdate: v })
-                  }}
-                />
-              </SettingItem>
-              {values.autoUpdate && (
-                <SettingItem
-                  title={t('profile.updateIntervalMinutes')}
-                  actions={
-                    values.locked && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button size="icon-sm" variant="ghost">
-                            <IoIosHelpCircle className="text-lg" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {t('profile.updateIntervalLockedHelp')}
-                        </TooltipContent>
-                      </Tooltip>
-                    )
-                  }
+                  className="flex-1 gap-2"
+                  onClick={handleSelectFile}
                 >
+                  <FileUp className="size-4" />
+                  {t('profile.selectFile')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 gap-2"
+                  onClick={handleCreateEmpty}
+                >
+                  <FilePlus2 className="size-4" />
+                  {t('profile.createEmpty')}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <div className="relative">
                   <Input
-                    type="number"
-                    className={cn(inputWidth, 'h-8')}
-                    value={values.interval?.toString() ?? ''}
+                    className={cn(
+                      'h-9 pr-9',
+                      urlInvalid && 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50'
+                    )}
+                    placeholder={t('profile.urlPlaceholder')}
+                    value={values.url || ''}
                     onChange={(e) => {
-                      setValues({ ...values, interval: parseInt(e.target.value) })
+                      setValues({ ...values, url: e.target.value })
+                      if (!urlTouched) setUrlTouched(true)
                     }}
-                    disabled={values.locked}
+                    onBlur={() => setUrlTouched(true)}
+                  />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={handlePaste}
+                      >
+                        <ClipboardPaste className="size-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{t('profile.pasteFromClipboard')}</TooltipContent>
+                  </Tooltip>
+                </div>
+                {urlInvalid && (
+                  <p className="text-xs text-destructive">{t('profile.invalidUrl')}</p>
+                )}
+              </div>
+            )}
+
+            {/* File selected indicator */}
+            {isLocal && values.file && (
+              <div className="flex items-center gap-2 text-xs text-success">
+                <Check className="size-3.5" />
+                {localFileName
+                  ? `${t('profile.fileSelected')}: ${localFileName}`
+                  : t('profile.blankSubscription')}
+              </div>
+            )}
+
+            {/* Advanced settings toggle */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="self-start -ml-2 text-muted-foreground hover:text-foreground gap-1"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+            >
+              <ChevronDown
+                className={cn(
+                  'size-4 transition-transform duration-200',
+                  showAdvanced && 'rotate-180'
+                )}
+              />
+              {t('profile.advancedSettings')}
+            </Button>
+
+            {showAdvanced && (
+              <div className="flex flex-col gap-2 border-t pt-3">
+                <SettingItem title={t('profile.profileType')}>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant={!isLocal ? 'default' : 'outline'}
+                      className="h-7 px-3 text-xs"
+                      onClick={() => switchToType('remote')}
+                    >
+                      {t('common.remote')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={isLocal ? 'default' : 'outline'}
+                      className="h-7 px-3 text-xs"
+                      onClick={() => switchToType('local')}
+                    >
+                      {t('common.local')}
+                    </Button>
+                  </div>
+                </SettingItem>
+                <SettingItem title={t('profile.name')}>
+                  <Input
+                    className="h-8"
+                    value={values.name}
+                    onChange={(e) => setValues({ ...values, name: e.target.value })}
                   />
                 </SettingItem>
-              )}
-            </>
-          )}
-        </div>
+                {!isLocal && (
+                  <>
+                    <SettingItem title={t('profile.customUA')}>
+                      <Input
+                        className="h-8"
+                        value={values.ua ?? ''}
+                        onChange={(e) =>
+                          setValues({ ...values, ua: e.target.value.trim() || undefined })
+                        }
+                      />
+                    </SettingItem>
+                    <SettingItem title={t('profile.verifyFormat')}>
+                      <Switch
+                        size="sm"
+                        checked={values.verify ?? true}
+                        onCheckedChange={(v) => setValues({ ...values, verify: v })}
+                      />
+                    </SettingItem>
+                    <SettingItem title={t('profile.useProxyUpdate')}>
+                      <Switch
+                        size="sm"
+                        checked={values.useProxy ?? false}
+                        onCheckedChange={(v) => setValues({ ...values, useProxy: v })}
+                      />
+                    </SettingItem>
+                    <SettingItem title={t('profile.autoUpdate')}>
+                      <Switch
+                        size="sm"
+                        checked={values.autoUpdate ?? false}
+                        onCheckedChange={(v) => setValues({ ...values, autoUpdate: v })}
+                      />
+                    </SettingItem>
+                    {values.autoUpdate && (
+                      <SettingItem
+                        title={t('profile.updateIntervalMinutes')}
+                        actions={
+                          values.locked && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button size="icon-sm" variant="ghost">
+                                  <IoIosHelpCircle className="text-lg" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {t('profile.updateIntervalLockedHelp')}
+                              </TooltipContent>
+                            </Tooltip>
+                          )
+                        }
+                      >
+                        <Input
+                          type="number"
+                          className="h-8"
+                          value={values.interval?.toString() ?? ''}
+                          onChange={(e) =>
+                            setValues({ ...values, interval: parseInt(e.target.value) })
+                          }
+                          disabled={values.locked}
+                        />
+                      </SettingItem>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Edit existing profile - original layout */
+          <div className="flex flex-col gap-2 overflow-y-auto max-h-[60vh]">
+            <SettingItem title={t('profile.name')}>
+              <Input
+                className={cn(inputWidth, 'h-8')}
+                value={values.name}
+                onChange={(e) => setValues({ ...values, name: e.target.value })}
+              />
+            </SettingItem>
+            {values.type === 'remote' && (
+              <>
+                <SettingItem title={t('profile.subscriptionAddress')}>
+                  <Input
+                    className={cn(inputWidth, 'h-8')}
+                    value={values.url}
+                    onChange={(e) => setValues({ ...values, url: e.target.value })}
+                  />
+                </SettingItem>
+                <SettingItem title={t('profile.customUA')}>
+                  <Input
+                    className={cn(inputWidth, 'h-8')}
+                    value={values.ua ?? ''}
+                    onChange={(e) =>
+                      setValues({ ...values, ua: e.target.value.trim() || undefined })
+                    }
+                  />
+                </SettingItem>
+                <SettingItem title={t('profile.verifyFormat')}>
+                  <Switch
+                    size="sm"
+                    checked={values.verify ?? true}
+                    onCheckedChange={(v) => setValues({ ...values, verify: v })}
+                  />
+                </SettingItem>
+                <SettingItem title={t('profile.useProxyUpdate')}>
+                  <Switch
+                    size="sm"
+                    checked={values.useProxy ?? false}
+                    onCheckedChange={(v) => setValues({ ...values, useProxy: v })}
+                  />
+                </SettingItem>
+                <SettingItem title={t('profile.autoUpdate')}>
+                  <Switch
+                    size="sm"
+                    checked={values.autoUpdate ?? false}
+                    onCheckedChange={(v) => setValues({ ...values, autoUpdate: v })}
+                  />
+                </SettingItem>
+                {values.autoUpdate && (
+                  <SettingItem
+                    title={t('profile.updateIntervalMinutes')}
+                    actions={
+                      values.locked && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button size="icon-sm" variant="ghost">
+                              <IoIosHelpCircle className="text-lg" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t('profile.updateIntervalLockedHelp')}
+                          </TooltipContent>
+                        </Tooltip>
+                      )
+                    }
+                  >
+                    <Input
+                      type="number"
+                      className={cn(inputWidth, 'h-8')}
+                      value={values.interval?.toString() ?? ''}
+                      onChange={(e) =>
+                        setValues({ ...values, interval: parseInt(e.target.value) })
+                      }
+                      disabled={values.locked}
+                    />
+                  </SettingItem>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
         <DialogFooter>
           <Button size="sm" variant="ghost" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button size="sm" onClick={onSave}>
-            {item.id ? t('common.save') : t('common.import')}
+          <Button size="sm" onClick={onSave} disabled={!canImport}>
+            {isNew ? t('common.import') : t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

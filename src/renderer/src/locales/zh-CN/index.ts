@@ -220,11 +220,18 @@ export default {
       fileImportFailed: '文件导入失败',
       unsupportedFileType: '不支持的文件类型',
       checkUpdate: '检查更新',
-      openInBrowser: '在浏览器中打开'
+      openInBrowser: '在浏览器中打开',
+      emptyTitle: '暂无订阅',
+      emptyDescription: '添加订阅以开始使用',
+      dropFileHint: '将配置文件拖放到此处'
     },
     proxies: {
       title: '代理组',
-      proxyGroupSettings: '代理组设置'
+      proxyGroupSettings: '代理组设置',
+      expandAll: '展开全部',
+      collapseAll: '收起全部',
+      delayTestAll: '全部延迟测试',
+      nodes: '节点'
     },
     connections: {
       title: '连接',
@@ -731,6 +738,14 @@ export default {
     unsavedChanges: '您有未保存的修改，确定要取消吗？',
     discardChanges: '放弃修改',
     keepEditing: '继续编辑',
+    profileType: '配置类型',
+    selectFile: '选择文件',
+    createEmpty: '创建空配置',
+    fileSelected: '文件已选择',
+    advancedSettings: '高级设置',
+    invalidUrl: '无效的链接',
+    pasteFromClipboard: '从剪贴板粘贴',
+    urlPlaceholder: '输入订阅链接...',
     editSubscription: '编辑订阅',
     editSubscriptionNoticePrefix: '注意：此处编辑配置更新订阅后会还原，如需要自定义配置请使用',
     editSubscriptionNoticeSuffix: '功能',

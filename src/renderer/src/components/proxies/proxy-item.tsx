@@ -5,6 +5,7 @@ import { mihomoUnfixedProxy } from '@renderer/utils/ipc'
 import React, { useMemo, useState } from 'react'
 import { FaMapPin } from 'react-icons/fa6'
 import { useTranslation } from 'react-i18next'
+import { Spinner } from '@renderer/components/ui/spinner'
 
 interface Props {
   mutateProxies: () => void
@@ -14,6 +15,13 @@ interface Props {
   group: ControllerMixedGroup
   onSelect: (group: string, proxy: string) => void
   selected: boolean
+}
+
+function delayColorClass(delay: number): string {
+  if (delay === -1) return 'text-primary'
+  if (delay === 0) return 'text-destructive'
+  if (delay < 500) return 'text-success'
+  return 'text-warning'
 }
 
 const ProxyItem: React.FC<Props> = (props) => {
@@ -29,17 +37,11 @@ const ProxyItem: React.FC<Props> = (props) => {
   }, [proxy])
 
   const [loading, setLoading] = useState(false)
-  function delayColor(delay: number): string {
-    if (delay === -1) return 'text-primary'
-    if (delay === 0) return 'text-destructive'
-    if (delay < 500) return 'text-success'
-    return 'text-warning'
-  }
 
-  function delayText(delay: number): string {
-    if (delay === -1) return t('proxies.delayTest')
-    if (delay === 0) return t('proxies.timeout')
-    return delay.toString()
+  function delayText(d: number): string {
+    if (d === -1) return t('proxies.delayTest')
+    if (d === 0) return t('proxies.timeout')
+    return d.toString()
   }
 
   const onDelay = (): void => {
@@ -56,27 +58,28 @@ const ProxyItem: React.FC<Props> = (props) => {
     <Card
       onClick={() => onSelect(group.name, proxy.name)}
       className={cn(
-        'w-full gap-0 py-0 cursor-pointer transition-colors',
+        'w-full gap-0 py-0 cursor-pointer transition-all duration-150 relative overflow-hidden',
         fixed
-          ? 'bg-secondary/20 hover:bg-secondary/30 border-secondary/30'
+          ? 'bg-amber-500/8 hover:bg-amber-500/12 border-amber-500/40 shadow-sm shadow-amber-500/10'
           : selected
-            ? 'bg-primary/10 hover:bg-primary/15 border-primary/30'
+            ? 'bg-primary/10 hover:bg-primary/15 border-primary/30 shadow-sm shadow-primary/10'
             : 'hover:bg-accent/50'
       )}
     >
-      <CardContent className="px-3 py-2">
+      <CardContent className="pl-4 pr-3 py-2">
         <div
           className={`flex ${proxyDisplayLayout === 'double' ? 'gap-1' : 'justify-between items-center'}`}
         >
           {proxyDisplayLayout === 'double' ? (
             <>
               <div className="flex flex-col gap-0 flex-1 min-w-0">
-                <div className="text-ellipsis overflow-hidden whitespace-nowrap">
-                  <div className="flag-emoji inline" title={proxy.name}>
+                <div className="flex items-center gap-1.5">
+                  <span className="flag-emoji text-sm truncate" title={proxy.name}>
                     {proxy.name}
-                  </div>
+                  </span>
+                  {fixed && <FaMapPin className="text-[10px] text-amber-500 shrink-0" />}
                 </div>
-                <div className="text-[12px] text-muted-foreground leading-none mt-0.5">
+                <div className="text-[11px] text-muted-foreground leading-none mt-0.5">
                   <span>{proxy.type}</span>
                 </div>
               </div>
@@ -90,7 +93,7 @@ const ProxyItem: React.FC<Props> = (props) => {
                       await mihomoUnfixedProxy(group.name)
                       mutateProxies()
                     }}
-                    className="h-6 w-6 min-w-6 p-0 text-xs text-destructive"
+                    className="h-6 w-6 min-w-6 p-0 text-amber-500 hover:text-amber-600 opacity-60 hover:opacity-100"
                   >
                     <FaMapPin className="text-xs" />
                   </Button>
@@ -103,58 +106,63 @@ const ProxyItem: React.FC<Props> = (props) => {
                     e.stopPropagation()
                     onDelay()
                   }}
-                  className={cn('h-8 w-8 min-w-8 p-0 text-xs', delayColor(delay))}
+                  className={cn(
+                    'h-7 px-1.5 text-xs font-medium whitespace-nowrap',
+                    delayColorClass(delay)
+                  )}
                 >
-                  {delayText(delay)}
+                  <span className="relative inline-flex items-center justify-center">
+                    {loading && <Spinner className="size-3 absolute" />}
+                    <span className={cn(loading && 'invisible')}>{delayText(delay)}</span>
+                  </span>
                 </Button>
               </div>
             </>
           ) : (
             <>
-              <div className="text-ellipsis overflow-hidden whitespace-nowrap">
-                <div className="flag-emoji inline" title={proxy.name}>
+              <div className="flex items-center gap-1.5 text-ellipsis overflow-hidden whitespace-nowrap">
+                <span className="flag-emoji text-sm truncate" title={proxy.name}>
                   {proxy.name}
-                </div>
+                </span>
                 {proxyDisplayLayout === 'single' && (
-                  <div className="inline ml-2 text-muted-foreground" title={proxy.type}>
+                  <span className="text-muted-foreground text-xs shrink-0" title={proxy.type}>
                     {proxy.type}
-                  </div>
+                  </span>
                 )}
               </div>
               <div className="flex items-center gap-0.5 shrink-0">
                 {fixed && (
-                  <div className="flex items-center">
-                    <Button
-                      variant="ghost"
-                      title={t('proxies.unpin')}
-                      onClick={async (e) => {
-                        e.stopPropagation()
-                        await mihomoUnfixedProxy(group.name)
-                        mutateProxies()
-                      }}
-                      className="h-6 w-6 min-w-6 p-0 text-xs text-destructive"
-                    >
-                      <FaMapPin className="text-xs" />
-                    </Button>
-                  </div>
-                )}
-                <div className="flex items-center">
                   <Button
                     variant="ghost"
-                    title={proxy.type}
-                    disabled={loading}
-                    onClick={(e) => {
+                    title={t('proxies.unpin')}
+                    onClick={async (e) => {
                       e.stopPropagation()
-                      onDelay()
+                      await mihomoUnfixedProxy(group.name)
+                      mutateProxies()
                     }}
-                    className={cn(
-                      'h-full w-8 min-w-8 p-0 text-sm',
-                      delayColor(delay)
-                    )}
+                    className="h-6 w-6 min-w-6 p-0 text-amber-500 hover:text-amber-600 opacity-60 hover:opacity-100"
                   >
-                    {delayText(delay)}
+                    <FaMapPin className="text-xs" />
                   </Button>
-                </div>
+                )}
+                <Button
+                  variant="ghost"
+                  title={proxy.type}
+                  disabled={loading}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelay()
+                  }}
+                  className={cn(
+                    'h-7 px-1.5 text-xs font-medium whitespace-nowrap',
+                    delayColorClass(delay)
+                  )}
+                >
+                  <span className="relative inline-flex items-center justify-center">
+                    {loading && <Spinner className="size-3 absolute" />}
+                    <span className={cn(loading && 'invisible')}>{delayText(delay)}</span>
+                  </span>
+                </Button>
               </div>
             </>
           )}

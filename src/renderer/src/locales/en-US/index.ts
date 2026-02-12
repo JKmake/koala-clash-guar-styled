@@ -182,11 +182,18 @@ export default {
       fileImportFailed: 'File import failed',
       unsupportedFileType: 'Unsupported file type',
       checkUpdate: 'Check for updates',
-      openInBrowser: 'Open in browser'
+      openInBrowser: 'Open in browser',
+      emptyTitle: 'No profiles yet',
+      emptyDescription: 'Add a profile to get started',
+      dropFileHint: 'Drop config file here'
     },
     proxies: {
       title: 'Proxy Groups',
-      proxyGroupSettings: 'Proxy group settings'
+      proxyGroupSettings: 'Proxy group settings',
+      expandAll: 'Expand all',
+      collapseAll: 'Collapse all',
+      delayTestAll: 'Delay test all',
+      nodes: 'nodes'
     },
     connections: {
       title: 'Connections',
@@ -709,6 +716,14 @@ export default {
     unsavedChanges: 'You have unsaved changes. Are you sure you want to discard them?',
     discardChanges: 'Discard changes',
     keepEditing: 'Keep editing',
+    profileType: 'Profile type',
+    selectFile: 'Select file',
+    createEmpty: 'Create empty',
+    fileSelected: 'File selected',
+    advancedSettings: 'Advanced settings',
+    invalidUrl: 'Invalid URL',
+    pasteFromClipboard: 'Paste from clipboard',
+    urlPlaceholder: 'Enter subscription URL...',
     editSubscription: 'Edit subscription',
     editSubscriptionNoticePrefix:
       'Note: edits here will be overwritten after subscription refresh. For custom changes, use ',

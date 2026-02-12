@@ -16,13 +16,21 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { GroupedVirtuoso, GroupedVirtuosoHandle } from 'react-virtuoso'
 import ProxyItem from '@renderer/components/proxies/proxy-item'
 import ProxySettingModal from '@renderer/components/proxies/proxy-setting-modal'
-import { IoIosArrowBack } from 'react-icons/io'
 import { MdDoubleArrow, MdOutlineSpeed, MdTune } from 'react-icons/md'
+import { LuChevronsDownUp, LuChevronsUpDown, LuChevronDown } from 'react-icons/lu'
 import { useGroups } from '@renderer/hooks/use-groups'
 import CollapseInput from '@renderer/components/base/collapse-input'
 import { includesIgnoreCase } from '@renderer/utils/includes'
 import { useControledMihomoConfig } from '@renderer/hooks/use-controled-mihomo-config'
 import { useTranslation } from 'react-i18next'
+
+const groupTypeColor: Record<string, string> = {
+  Selector: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  URLTest: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  Fallback: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+  LoadBalance: 'bg-violet-500/15 text-violet-600 dark:text-violet-400',
+  Relay: 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+}
 
 const Proxies: React.FC = () => {
   const { t } = useTranslation()
@@ -75,6 +83,10 @@ const Proxies: React.FC = () => {
     })
     return { groupCounts, allProxies }
   }, [groups, isOpen, proxyDisplayOrder, cols, searchValue])
+
+  const allExpanded = useMemo(() => {
+    return groups.length > 0 && isOpen.every(Boolean)
+  }, [groups, isOpen])
 
   const onChangeProxy = useCallback(
     async (group: string, proxy: string): Promise<void> => {
@@ -159,6 +171,13 @@ const Proxies: React.FC = () => {
     })
   }, [])
 
+  const toggleAll = useCallback(() => {
+    setIsOpen((prev) => {
+      const shouldExpand = !prev.every(Boolean)
+      return Array(prev.length).fill(shouldExpand)
+    })
+  }, [])
+
   const updateSearchValue = useCallback((index: number, value: string) => {
     setSearchValue((prev) => {
       const newSearchValue = [...prev]
@@ -219,12 +238,18 @@ const Proxies: React.FC = () => {
           mutate()
         })
       }
-      return groups[index] ? (
+      const group = groups[index]
+      if (!group) return <div>Never See This</div>
+
+      const typeColorClass =
+        groupTypeColor[group.type] || 'bg-muted text-muted-foreground'
+
+      return (
         <div
           className={`w-full ${index > 0 ? 'pt-2' : ''} ${index === groupCounts.length - 1 && !isOpen[index] ? 'pb-2' : ''} px-2`}
         >
           <Card
-            className="w-full cursor-pointer py-0 transition-colors hover:bg-accent/50"
+            className="w-full cursor-pointer py-0 transition-all duration-200 hover:bg-accent/50 hover:shadow-sm"
             role="button"
             tabIndex={0}
             onClick={() => toggleOpen(index)}
@@ -235,54 +260,42 @@ const Proxies: React.FC = () => {
               }
             }}
           >
-            <CardContent className="w-full h-14 px-4 py-2">
-              <div className="flex justify-between h-full">
-                <div className="flex text-ellipsis overflow-hidden whitespace-nowrap h-full">
-                  {groups[index].icon ? (
-                    <Avatar className="bg-transparent mr-2 rounded-md self-center">
+            <CardContent className="w-full px-4 py-3">
+              <div className="flex justify-between items-center">
+                {/* Left side: icon + name + meta */}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {group.icon ? (
+                    <Avatar className="bg-transparent rounded-md shrink-0 size-9">
                       <AvatarImage
                         src={
-                          groups[index].icon.startsWith('<svg')
-                            ? `data:image/svg+xml;utf8,${groups[index].icon}`
-                            : localStorage.getItem(groups[index].icon) || groups[index].icon
+                          group.icon.startsWith('<svg')
+                            ? `data:image/svg+xml;utf8,${group.icon}`
+                            : localStorage.getItem(group.icon) || group.icon
                         }
                       />
                     </Avatar>
                   ) : null}
-                  <div
-                    className={`flex flex-col h-full ${groupDisplayLayout === 'double' ? '' : 'justify-center'}`}
-                  >
-                    <div
-                      className={`text-ellipsis overflow-hidden whitespace-nowrap leading-tight ${groupDisplayLayout === 'double' ? 'text-md flex-5 flex items-center' : 'text-lg'}`}
-                    >
-                      <span className="flag-emoji inline-block">{groups[index].name}</span>
-                      {groupDisplayLayout === 'single' && (
-                        <>
-                          <div
-                            title={groups[index].type}
-                            className="inline ml-2 text-sm text-foreground-500"
-                          >
-                            {groups[index].type}
-                          </div>
-                          <div className="inline flag-emoji ml-2 text-sm text-foreground-500">
-                            {groups[index].now}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    {groupDisplayLayout === 'double' && (
-                      <div className="text-ellipsis whitespace-nowrap text-[10px] text-foreground-500 leading-tight flex-3 flex items-center">
-                        <span>{groups[index].type}</span>
-                        <span className="flag-emoji ml-1 inline-block">{groups[index].now}</span>
+                  <div className={`flex ${groupDisplayLayout === 'double' ? 'flex-col gap-0.5' : 'items-center gap-2'} min-w-0`}>
+                    <span className="flag-emoji text-sm font-medium truncate leading-tight">
+                      {group.name}
+                    </span>
+                    {groupDisplayLayout !== 'hidden' && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground leading-tight min-w-0">
+                        <Badge
+                          variant="ghost"
+                          className={`text-[10px] px-1.5 py-0 h-4 rounded-md font-medium shrink-0 ${typeColorClass}`}
+                        >
+                          {group.type}
+                        </Badge>
+                        <span className="flag-emoji truncate">{group.now}</span>
                       </div>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center">
+
+                {/* Right side: actions */}
+                <div className="flex items-center gap-0.5 shrink-0">
                   <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
-                    <Badge variant="secondary" className="my-1 mr-2">
-                      {groups[index].all.length}
-                    </Badge>
                     <CollapseInput
                       value={searchValue[index]}
                       onValueChange={(v) => updateSearchValue(index, v)}
@@ -293,7 +306,7 @@ const Proxies: React.FC = () => {
                       size="icon-sm"
                       onClick={() => scrollToCurrentProxy(index)}
                     >
-                      <FaLocationCrosshairs className="text-lg text-foreground-500" />
+                      <FaLocationCrosshairs className="text-base text-muted-foreground" />
                     </Button>
                     <Button
                       title={t('sider.delayTest')}
@@ -304,22 +317,20 @@ const Proxies: React.FC = () => {
                       onClick={() => onGroupDelay(index)}
                     >
                       {delaying[index] ? (
-                        <Spinner className="size-4 text-foreground-500" />
+                        <Spinner className="size-4 text-muted-foreground" />
                       ) : (
-                        <MdOutlineSpeed className="text-lg text-foreground-500" />
+                        <MdOutlineSpeed className="text-lg text-muted-foreground" />
                       )}
                     </Button>
                   </div>
-                  <IoIosArrowBack
-                    className={`transition duration-200 ml-2 h-8 text-lg text-foreground-500 flex items-center ${isOpen[index] ? '-rotate-90' : ''}`}
+                  <LuChevronDown
+                    className={`transition-transform duration-200 ml-1 text-base text-muted-foreground ${isOpen[index] ? 'rotate-180' : ''}`}
                   />
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
-      ) : (
-        <div>Never See This</div>
       )
     },
     [
@@ -333,7 +344,8 @@ const Proxies: React.FC = () => {
       updateSearchValue,
       scrollToCurrentProxy,
       onGroupDelay,
-      mutate
+      mutate,
+      t
     ]
   )
 
@@ -391,23 +403,40 @@ const Proxies: React.FC = () => {
     <BasePage
       title={t('pages.proxies.title')}
       header={
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          className="app-nodrag"
-          title={t('pages.proxies.proxyGroupSettings')}
-          onClick={() => setIsSettingModalOpen(true)}
-        >
-          <MdTune className="text-lg" />
-        </Button>
+        <>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="app-nodrag"
+            title={allExpanded ? t('pages.proxies.collapseAll') : t('pages.proxies.expandAll')}
+            onClick={toggleAll}
+          >
+            {allExpanded ? (
+              <LuChevronsDownUp className="text-lg" />
+            ) : (
+              <LuChevronsUpDown className="text-lg" />
+            )}
+          </Button>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="app-nodrag"
+            title={t('pages.proxies.proxyGroupSettings')}
+            onClick={() => setIsSettingModalOpen(true)}
+          >
+            <MdTune className="text-lg" />
+          </Button>
+        </>
       }
     >
       {isSettingModalOpen && <ProxySettingModal onClose={() => setIsSettingModalOpen(false)} />}
       {mode === 'direct' ? (
         <div className="h-full w-full flex justify-center items-center">
-          <div className="flex flex-col items-center">
-            <MdDoubleArrow className="text-foreground-500 text-[100px]" />
-            <h2 className="text-foreground-500 text-[20px]">{t('sider.directMode')}</h2>
+          <div className="flex flex-col items-center gap-3">
+            <div className="rounded-full bg-muted p-6">
+              <MdDoubleArrow className="text-muted-foreground text-5xl" />
+            </div>
+            <h2 className="text-muted-foreground text-lg font-medium">{t('sider.directMode')}</h2>
           </div>
         </div>
       ) : (

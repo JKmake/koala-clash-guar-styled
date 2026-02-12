@@ -1,15 +1,11 @@
 import { Button } from '@renderer/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@renderer/components/ui/dropdown-menu'
+
+
 import BasePage from '@renderer/components/base/base-page'
 import ProfileItem from '@renderer/components/profiles/profile-item'
 import EditInfoModal from '@renderer/components/profiles/edit-info-modal'
 import { useProfileConfig } from '@renderer/hooks/use-profile-config'
-import { getFilePath, readTextFile } from '@renderer/utils/ipc'
+import { readTextFile } from '@renderer/utils/ipc'
 import { useEffect, useRef, useState } from 'react'
 import {
   DndContext,
@@ -24,7 +20,7 @@ import { IoMdRefresh } from 'react-icons/io'
 import { MdTune } from 'react-icons/md'
 import ProfileSettingModal from '@renderer/components/profiles/profile-setting-modal'
 import { useTranslation } from 'react-i18next'
-import { Plus } from 'lucide-react'
+import { Plus, FileDown } from 'lucide-react'
 
 const emptyItems: ProfileItem[] = []
 
@@ -120,43 +116,17 @@ const Profiles: React.FC = () => {
     setSortedItems(itemsArray)
   }, [itemsArray])
 
-  const handleMenuAction = async (action: 'open' | 'new' | 'import'): Promise<void> => {
-    switch (action) {
-      case 'open': {
-        try {
-          const files = await getFilePath(['yml', 'yaml'])
-          if (files?.length) {
-            const content = await readTextFile(files[0])
-            const fileName = files[0].split('/').pop()?.split('\\').pop()
-            await addProfileItem({ name: fileName, type: 'local', file: content })
-          }
-        } catch (e) {
-          alert(e)
-        }
-        break
-      }
-      case 'new': {
-        await addProfileItem({
-          name: t('pages.profiles.newConfig'),
-          type: 'local',
-          file: 'proxies: []\nproxy-groups: []\nrules: []'
-        })
-        break
-      }
-      case 'import': {
-        const newRemoteProfile: ProfileItem = {
-          id: '',
-          name: '',
-          type: 'remote',
-          url: '',
-          useProxy: false,
-          autoUpdate: true
-        }
-        setEditingItem(newRemoteProfile)
-        setShowEditModal(true)
-        break
-      }
+  const handleAddProfile = (): void => {
+    const newProfile: ProfileItem = {
+      id: '',
+      name: '',
+      type: 'remote',
+      url: '',
+      useProxy: false,
+      autoUpdate: true
     }
+    setEditingItem(newProfile)
+    setShowEditModal(true)
   }
 
   return (
@@ -165,24 +135,14 @@ const Profiles: React.FC = () => {
       title={t('pages.profiles.title')}
       header={
         <>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="new-profile" variant='ghost' size="icon-sm">
-                <Plus />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onSelect={() => handleMenuAction('open')}>
-                {t('pages.profiles.openLocalConfig')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleMenuAction('new')}>
-                {t('pages.profiles.newLocalConfig')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleMenuAction('import')}>
-                {t('pages.profiles.importRemoteConfig')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            className="new-profile"
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleAddProfile}
+          >
+            <Plus />
+          </Button>
           <Button
             size="icon-sm"
             title={t('pages.profiles.updateAll')}
@@ -235,36 +195,62 @@ const Profiles: React.FC = () => {
         />
       )}
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <div
-          className={`${fileOver ? 'blur-sm' : ''} grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 mx-2 mb-2`}
-        >
-          <SortableContext
-            items={sortedItems.map((item) => {
-              return item.id
-            })}
-          >
-            {sortedItems.map((item) => (
-              <ProfileItem
-                key={item.id}
-                isCurrent={item.id === current}
-                addProfileItem={addProfileItem}
-                removeProfileItem={removeProfileItem}
-                mutateProfileConfig={mutateProfileConfig}
-                updateProfileItem={updateProfileItem}
-                info={item}
-                switching={switching}
-                onClick={async () => {
-                  setSwitching(true)
-                  await changeCurrentProfile(item.id)
-                  await new Promise((resolve) => setTimeout(resolve, 500))
-                  setSwitching(false)
-                }}
-              />
-            ))}
-          </SortableContext>
+      {/* File drop overlay */}
+      {fileOver && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 px-12 py-8">
+            <FileDown className="size-10 text-primary" />
+            <span className="text-sm font-medium text-primary">
+              {t('pages.profiles.dropFileHint')}
+            </span>
+          </div>
         </div>
-      </DndContext>
+      )}
+
+      {sortedItems.length === 0 ? (
+        <div className="h-full w-full flex justify-center items-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="rounded-full bg-muted p-6">
+              <Plus className="text-muted-foreground size-10" />
+            </div>
+            <h2 className="text-muted-foreground text-lg font-medium">
+              {t('pages.profiles.emptyTitle')}
+            </h2>
+            <p className="text-muted-foreground/70 text-sm">
+              {t('pages.profiles.emptyDescription')}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 mx-2 mb-2">
+            <SortableContext
+              items={sortedItems.map((item) => {
+                return item.id
+              })}
+            >
+              {sortedItems.map((item) => (
+                <ProfileItem
+                  key={item.id}
+                  isCurrent={item.id === current}
+                  addProfileItem={addProfileItem}
+                  removeProfileItem={removeProfileItem}
+                  mutateProfileConfig={mutateProfileConfig}
+                  updateProfileItem={updateProfileItem}
+                  info={item}
+                  switching={switching}
+                  onClick={async () => {
+                    setSwitching(true)
+                    await changeCurrentProfile(item.id)
+                    await new Promise((resolve) => setTimeout(resolve, 500))
+                    setSwitching(false)
+                  }}
+                />
+              ))}
+            </SortableContext>
+          </div>
+        </DndContext>
+      )}
     </BasePage>
   )
 }

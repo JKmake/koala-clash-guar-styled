@@ -105,7 +105,7 @@ const Logs: React.FC = () => {
             <CgTrash className="text-lg text-destructive" />
           </Button>
         </div>
-        <Separator />
+        <Separator className="mx-2" />
       </div>
       <div className="h-[calc(100vh-108px)] mt-px">
         <Virtuoso

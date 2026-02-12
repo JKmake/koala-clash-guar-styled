@@ -180,11 +180,18 @@ export default {
       fileImportFailed: 'Не удалось импортировать файл',
       unsupportedFileType: 'Неподдерживаемый тип файла',
       checkUpdate: 'Проверить обновления',
-      openInBrowser: 'Открыть в браузере'
+      openInBrowser: 'Открыть в браузере',
+      emptyTitle: 'Профилей пока нет',
+      emptyDescription: 'Добавьте профиль, чтобы начать',
+      dropFileHint: 'Перетащите файл конфигурации сюда'
     },
     proxies: {
       title: 'Группы прокси',
-      proxyGroupSettings: 'Настройки группы прокси'
+      proxyGroupSettings: 'Настройки группы прокси',
+      expandAll: 'Развернуть все',
+      collapseAll: 'Свернуть все',
+      delayTestAll: 'Тест задержки для всех',
+      nodes: 'узлов'
     },
     connections: {
       title: 'Подключения',
@@ -693,6 +700,14 @@ export default {
     unsavedChanges: 'Есть несохраненные изменения. Отменить?',
     discardChanges: 'Отменить изменения',
     keepEditing: 'Продолжить редактирование',
+    profileType: 'Тип профиля',
+    selectFile: 'Выбрать файл',
+    createEmpty: 'Создать пустой',
+    fileSelected: 'Файл выбран',
+    advancedSettings: 'Дополнительные настройки',
+    invalidUrl: 'Некорректная ссылка',
+    pasteFromClipboard: 'Вставить из буфера обмена',
+    urlPlaceholder: 'Введите ссылку на подписку...',
     editSubscription: 'Редактировать подписку',
     editSubscriptionNoticePrefix:
       'Примечание: изменения здесь будут сброшены после обновления подписки. Для кастомизации используйте ',
