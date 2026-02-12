@@ -114,6 +114,8 @@ export default {
     detail: {
       title: 'Детали подключения',
       status: 'Статус',
+      active: 'Активно',
+      closed: 'Закрыто',
       establishTime: 'Время установления',
       rule: 'Правило',
       proxyChain: 'Цепочка прокси',
@@ -133,6 +135,14 @@ export default {
       dscp: 'DSCP',
       remoteDestination: 'Удалённое назначение',
       dnsMode: 'Режим DNS'
+    },
+    sections: {
+      traffic: 'Трафик',
+      routing: 'Маршрутизация',
+      network: 'Сеть',
+      process: 'Процесс',
+      inbound: 'Входящее',
+      other: 'Прочее'
     },
     table: {
       noData: 'Нет данных'

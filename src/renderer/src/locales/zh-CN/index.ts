@@ -172,7 +172,17 @@ export default {
       inboundUser: '入站用户',
       dscp: 'DSCP',
       remoteDestination: '远程目标',
-      dnsMode: 'DNS 模式'
+      dnsMode: 'DNS 模式',
+      active: '活跃',
+      closed: '已关闭'
+    },
+    sections: {
+      traffic: '流量',
+      routing: '路由',
+      network: '网络',
+      process: '进程',
+      inbound: '入站',
+      other: '其他'
     },
     table: {
       noData: '无数据'

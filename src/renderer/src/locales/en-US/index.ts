@@ -134,7 +134,17 @@ export default {
       inboundUser: 'Inbound User',
       dscp: 'DSCP',
       remoteDestination: 'Remote Destination',
-      dnsMode: 'DNS Mode'
+      dnsMode: 'DNS Mode',
+      active: 'Active',
+      closed: 'Closed'
+    },
+    sections: {
+      traffic: 'Traffic',
+      routing: 'Routing',
+      network: 'Network',
+      process: 'Process',
+      inbound: 'Inbound',
+      other: 'Other'
     },
     table: {
       noData: 'No data'
