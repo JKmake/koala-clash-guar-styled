@@ -1,6 +1,5 @@
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
-import { Card, CardContent } from '@renderer/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,7 +7,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@renderer/components/ui/dropdown-menu'
-import { Progress } from '@renderer/components/ui/progress'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import { cn } from '@renderer/lib/utils'
 import { useTranslation } from 'react-i18next'
@@ -23,6 +21,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { openFile } from '@renderer/utils/ipc'
 import ConfirmModal from '../base/base-confirm'
+import { Check } from 'lucide-react'
 
 interface Props {
   info: ProfileItem
@@ -40,6 +39,177 @@ interface MenuItem {
   label: string
   showDivider: boolean
   variant: 'default' | 'destructive'
+}
+
+const TrafficRing: React.FC<{
+  percent: number
+  size?: number
+  strokeWidth?: number
+  hasLimit: boolean
+  expired: boolean
+}> = ({ percent, size = 40, strokeWidth = 3.5, hasLimit, expired }) => {
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const cx = size / 2
+  const cy = size / 2
+  const exhausted = hasLimit && percent >= 100
+
+  const getColor = (): string => {
+    if (percent > 90) return 'var(--destructive)'
+    if (percent > 70) return 'var(--warning)'
+    return 'var(--gradient-end-power-on)'
+  }
+
+  // Expired subscription: orange/warning dashed ring with clock icon
+  if (expired) {
+    const dashLen = circumference / 10
+    return (
+      <svg width={size} height={size} className="shrink-0">
+        <circle
+          cx={cx}
+          cy={cy}
+          r={radius}
+          fill="none"
+          stroke="var(--warning)"
+          strokeWidth={strokeWidth}
+          strokeDasharray={`${dashLen * 0.5} ${dashLen * 0.5}`}
+          opacity={0.35}
+        />
+        <circle
+          cx={cx}
+          cy={cy}
+          r={radius * 0.55}
+          fill="none"
+          stroke="var(--warning)"
+          strokeWidth={1.5}
+          opacity={0.6}
+        />
+        {/* Clock hands */}
+        <line
+          x1={cx}
+          y1={cy}
+          x2={cx}
+          y2={cy - radius * 0.35}
+          stroke="var(--warning)"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+        />
+        <line
+          x1={cx}
+          y1={cy}
+          x2={cx + radius * 0.25}
+          y2={cy}
+          stroke="var(--warning)"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+        />
+        {/* Center dot */}
+        <circle cx={cx} cy={cy} r={1} fill="var(--warning)" />
+      </svg>
+    )
+  }
+
+  // Unlimited: dashed ring with infinity icon
+  if (!hasLimit) {
+    const dashLen = circumference / 8
+    return (
+      <svg width={size} height={size} className="shrink-0">
+        <circle
+          cx={cx}
+          cy={cy}
+          r={radius}
+          fill="none"
+          stroke="var(--gradient-end-power-on)"
+          strokeWidth={strokeWidth}
+          strokeDasharray={`${dashLen * 0.6} ${dashLen * 0.4}`}
+          strokeLinecap="round"
+          opacity={0.4}
+        />
+        <text
+          x={cx}
+          y={cy}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={14}
+          fill="var(--gradient-end-power-on)"
+          className="font-medium"
+        >
+          ∞
+        </text>
+      </svg>
+    )
+  }
+
+  // Exhausted: full red ring with X icon
+  if (exhausted) {
+    return (
+      <svg width={size} height={size} className="shrink-0">
+        <circle
+          cx={cx}
+          cy={cy}
+          r={radius}
+          fill="none"
+          stroke="var(--destructive)"
+          strokeWidth={strokeWidth}
+          opacity={0.25}
+        />
+        <circle
+          cx={cx}
+          cy={cy}
+          r={radius}
+          fill="none"
+          stroke="var(--destructive)"
+          strokeWidth={strokeWidth}
+        />
+        <line
+          x1={cx - 5}
+          y1={cy - 5}
+          x2={cx + 5}
+          y2={cy + 5}
+          stroke="var(--destructive)"
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
+        <line
+          x1={cx + 5}
+          y1={cy - 5}
+          x2={cx - 5}
+          y2={cy + 5}
+          stroke="var(--destructive)"
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
+      </svg>
+    )
+  }
+
+  // Normal: arc progress ring
+  const offset = circumference - (percent / 100) * circumference
+  return (
+    <svg width={size} height={size} className="shrink-0 -rotate-90">
+      <circle
+        cx={cx}
+        cy={cy}
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        className="text-muted/40"
+      />
+      <circle
+        cx={cx}
+        cy={cy}
+        r={radius}
+        fill="none"
+        stroke={getColor()}
+        strokeWidth={strokeWidth}
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        className="transition-all duration-500"
+      />
+    </svg>
+  )
 }
 
 const ProfileItem: React.FC<Props> = (props) => {
@@ -166,7 +336,6 @@ const ProfileItem: React.FC<Props> = (props) => {
     }
   }, [isDragging])
 
-  const trafficPercent = total > 0 ? Math.min(100, Math.round((usage / total) * 100)) : 0
   const hasLimit = total > 0
   const expired = extra?.expire ? dayjs.unix(extra.expire).isBefore(dayjs()) : false
   const percentLabel = hasLimit ? `${percent}%` : t('pages.home.unlimited')
@@ -180,9 +349,8 @@ const ProfileItem: React.FC<Props> = (props) => {
 
   return (
     <div
-      className="grid col-span-1"
+      className="relative col-span-1"
       style={{
-        position: 'relative',
         transform: CSS.Transform.toString(transform),
         transition,
         zIndex: isDragging ? 'calc(infinity)' : undefined
@@ -212,7 +380,8 @@ const ProfileItem: React.FC<Props> = (props) => {
           }}
         />
       )}
-      <Card
+
+      <div
         role="button"
         tabIndex={0}
         aria-selected={isCurrent}
@@ -225,136 +394,178 @@ const ProfileItem: React.FC<Props> = (props) => {
           }
         }}
         className={cn(
-          'group w-full cursor-pointer py-0 gap-0 transition-all duration-150 relative overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+          'group relative rounded-2xl border backdrop-blur-xl p-3 cursor-pointer transition-all duration-200',
           isCurrent
-            ? 'bg-primary/10 hover:bg-primary/15 border-primary/30 shadow-sm shadow-primary/10'
-            : 'hover:bg-accent/50',
+            ? 'border-stroke-power-on bg-linear-to-br from-gradient-start-power-on/10 to-gradient-end-power-on/10'
+            : 'border-stroke bg-card/50 hover:bg-accent/50',
           selecting && 'opacity-60 scale-[0.98]',
           switching && 'cursor-wait'
         )}
       >
         <div ref={setNodeRef} {...attributes} {...listeners} className="w-full h-full">
-          <CardContent className="px-4 py-3">
-            {/* Header: name + actions */}
-            <div className="flex items-start gap-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0 flex items-center gap-2">
-                    <h3
-                      title={info?.name}
-                      className="text-sm font-semibold truncate leading-tight text-foreground"
-                    >
-                      {info?.name}
-                    </h3>
-                    <Badge
-                      variant="ghost"
-                      className={cn(
-                        'text-[10px] px-1.5 py-0 h-4 rounded-md font-medium shrink-0',
-                        info.type === 'remote'
-                          ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-                          : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                      )}
-                    >
-                      {info.type === 'remote' ? t('common.remote') : t('common.local')}
-                    </Badge>
-                  </div>
-                  <div
-                    className="flex items-center shrink-0 gap-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {info.type === 'remote' && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            disabled={updating}
-                            onClick={async () => {
-                              setUpdating(true)
-                              await addProfileItem(info)
-                              setUpdating(false)
-                            }}
-                          >
-                            <IoMdRefresh
-                              className={cn(
-                                'text-lg text-muted-foreground',
-                                updating && 'animate-spin'
-                              )}
-                            />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="left">{updatedFromNow}</TooltipContent>
-                      </Tooltip>
-                    )}
+          {/* Header row: favicon + name + badge + actions */}
+          <div className="flex items-center gap-2">
+            {/* Favicon or check indicator */}
+            <div
+              className={cn(
+                'flex items-center justify-center shrink-0 w-[34px] h-[34px] rounded-lg transition-colors duration-200',
+                isCurrent
+                  ? 'bg-linear-to-br from-gradient-start-power-on/30 to-gradient-end-power-on/30'
+                  : 'bg-muted/50'
+              )}
+            >
+              {info.home ? (
+                <img
+                  src={`https://www.google.com/s2/favicons?domain=${new URL(info.home).hostname}&sz=32`}
+                  alt=""
+                  className="w-4.5 h-4.5 rounded-sm"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.style.display = 'none'
+                    target.parentElement!.innerHTML = isCurrent
+                      ? '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gradient-end-power-on"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+                      : '<span class="text-xs font-semibold text-muted-foreground">' +
+                        (info.name?.charAt(0)?.toUpperCase() || 'P') +
+                        '</span>'
+                  }}
+                />
+              ) : isCurrent ? (
+                <Check className="w-4 h-4 text-gradient-end-power-on" />
+              ) : (
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {info.name?.charAt(0)?.toUpperCase() || 'P'}
+                </span>
+              )}
+            </div>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="icon-sm" variant="ghost">
-                          <IoMdMore className="text-lg text-muted-foreground" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {menuItems.map((item) => (
-                          <React.Fragment key={item.key}>
-                            <DropdownMenuItem
-                              variant={item.variant}
-                              onClick={() => onMenuAction(item.key)}
-                            >
-                              {item.label}
-                            </DropdownMenuItem>
-                            {item.showDivider && <DropdownMenuSeparator />}
-                          </React.Fragment>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                  {info.type === 'local' && (
-                    <span className="text-[11px] text-muted-foreground">
-                      {t('profile.dateUpdated')}: {updatedFromNow}
-                    </span>
+            {/* Name + type */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <h3
+                  title={info?.name}
+                  className="text-sm font-medium truncate leading-tight text-foreground"
+                >
+                  {info?.name}
+                </h3>
+                <Badge
+                  variant="ghost"
+                  className={cn(
+                    'text-[10px] px-1.5 py-0 h-4 rounded-md font-medium shrink-0',
+                    info.type === 'remote'
+                      ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
+                      : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                   )}
-                </div>
+                >
+                  {info.type === 'remote' ? t('common.remote') : t('common.local')}
+                </Badge>
               </div>
             </div>
 
-            {/* Info section for remote profiles */}
-            {info.type === 'remote' && (
-              <div className="mt-3 flex flex-col gap-2">
-                {/* Traffic row */}
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>
-                    {calcTraffic(usage)} / {total > 0 ? calcTraffic(total) : '∞'}
-                  </span>
-                  <span>{percentLabel}</span>
-                </div>
-                <Progress
-                  className={cn(
-                    'w-full h-1.5',
-                    hasLimit
-                      ? trafficPercent > 90
-                        ? '**:data-[slot=progress-indicator]:bg-destructive'
-                        : trafficPercent > 70
-                          ? '**:data-[slot=progress-indicator]:bg-warning'
-                          : '**:data-[slot=progress-indicator]:bg-primary'
-                      : '**:data-[slot=progress-indicator]:bg-muted/40'
+            {/* Actions */}
+            <div
+              className="flex items-center shrink-0 gap-0.5 -mr-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {info.type === 'remote' && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      disabled={updating}
+                      className="rounded-xl"
+                      onClick={async () => {
+                        setUpdating(true)
+                        await addProfileItem(info)
+                        setUpdating(false)
+                      }}
+                    >
+                      <IoMdRefresh
+                        className={cn(
+                          'text-base text-muted-foreground',
+                          updating && 'animate-spin'
+                        )}
+                      />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">{updatedFromNow}</TooltipContent>
+                </Tooltip>
+              )}
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon-sm" variant="ghost" className="rounded-xl">
+                    <IoMdMore className="text-base text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {menuItems.map((item) => (
+                    <React.Fragment key={item.key}>
+                      <DropdownMenuItem
+                        variant={item.variant}
+                        onClick={() => onMenuAction(item.key)}
+                      >
+                        {item.label}
+                      </DropdownMenuItem>
+                      {item.showDivider && <DropdownMenuSeparator />}
+                    </React.Fragment>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-center gap-2">
+            <TrafficRing
+              percent={info.type === 'remote' && hasLimit ? percent : 0}
+              size={34}
+              hasLimit={info.type === 'remote' ? hasLimit : false}
+              expired={info.type === 'remote' ? expired : false}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline justify-between">
+                <span className="text-xs font-medium text-foreground">
+                  {info.type === 'remote' ? (
+                    <>
+                      {calcTraffic(usage)}
+                      <span className="text-muted-foreground font-normal">
+                        {' '}/ {hasLimit ? calcTraffic(total) : '∞'}
+                      </span>
+                    </>
+                  ) : (
+                    updatedFromNow
                   )}
-                  value={hasLimit ? percent : 0}
-                />
-                {/* Updated + Expires row */}
-                <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>
-                    {t('profile.dateUpdated')}: {updatedFromNow}
+                </span>
+                {info.type === 'remote' && (
+                  <span
+                    className={cn(
+                      'text-[10px] font-medium',
+                      !hasLimit
+                        ? 'text-muted-foreground'
+                        : percent > 90
+                          ? 'text-destructive'
+                          : percent > 70
+                            ? 'text-warning'
+                            : 'text-gradient-end-power-on'
+                    )}
+                  >
+                    {percentLabel}
                   </span>
-                  <span>{expireLabel}</span>
-                </div>
+                )}
               </div>
-            )}
-          </CardContent>
+              <div className={cn(
+                'text-[10px] mt-1 flex items-center justify-between',
+                info.type === 'remote' && expired ? 'text-warning font-medium' : 'text-muted-foreground'
+              )}>
+                <span>{info.type === 'remote' && expired ? `⚠ ${expireLabel}` : expireLabel}</span>
+                {info.type === 'remote' && (
+                  <span className="text-muted-foreground">{updatedFromNow}</span>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }
