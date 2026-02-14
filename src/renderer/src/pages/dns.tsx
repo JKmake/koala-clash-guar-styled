@@ -172,7 +172,7 @@ const DNS: React.FC = () => {
             value={values.enhancedMode}
             onValueChange={(value) => setValues({ ...values, enhancedMode: value as DnsMode })}
           >
-            <TabsList className="h-8">
+            <TabsList>
               <TabsTrigger value="fake-ip">{t('pages.dns.fakeIP')}</TabsTrigger>
               <TabsTrigger value="redir-host">{t('pages.dns.realIP')}</TabsTrigger>
               <TabsTrigger value="normal">{t('pages.dns.cancelMapping')}</TabsTrigger>

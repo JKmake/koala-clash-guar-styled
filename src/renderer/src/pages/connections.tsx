@@ -651,7 +651,7 @@ const Connections: React.FC = () => {
       <div className="overflow-x-auto sticky top-0 z-40">
         <div className="flex px-2 pb-2 gap-2">
           <Tabs value={tab} onValueChange={handleTabChange} className="w-fit">
-            <TabsList className="h-8">
+            <TabsList>
               <TabsTrigger value="active" className="gap-2">
                 <Badge
                   variant='default'

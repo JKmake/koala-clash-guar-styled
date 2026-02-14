@@ -136,7 +136,7 @@ const AdvancedSettings: React.FC = () => {
                 }
               }}
             >
-              <TabsList className="h-8">
+              <TabsList>
                 <TabsTrigger value="core">{t('settings.advanced.keepCoreOnly')}</TabsTrigger>
                 <TabsTrigger value="tray">{t('settings.advanced.closeRendererOnly')}</TabsTrigger>
               </TabsList>

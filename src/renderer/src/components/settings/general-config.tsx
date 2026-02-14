@@ -101,7 +101,7 @@ const GeneralConfig: React.FC = () => {
               patchAppConfig({ updateChannel: value as 'stable' | 'beta' })
             }}
           >
-            <TabsList className="h-8">
+            <TabsList>
               <TabsTrigger value="stable">{t('settings.general.stable')}</TabsTrigger>
               <TabsTrigger value="beta">{t('settings.general.beta')}</TabsTrigger>
             </TabsList>

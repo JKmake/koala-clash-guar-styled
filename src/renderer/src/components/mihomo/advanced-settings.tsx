@@ -55,7 +55,7 @@ const AdvancedSetting: React.FC = () => {
             onChangeNeedRestart({ 'find-process-mode': value as FindProcessMode })
           }}
         >
-          <TabsList className="h-8">
+          <TabsList>
             <TabsTrigger value="strict">{t('mihomo.advancedSettings.auto')}</TabsTrigger>
             <TabsTrigger value="off">{t('common.close')}</TabsTrigger>
             <TabsTrigger value="always">{t('mihomo.advancedSettings.enable')}</TabsTrigger>

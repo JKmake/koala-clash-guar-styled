@@ -94,7 +94,7 @@ const ProxySettingModal: React.FC<Props> = (props) => {
                 })
               }}
             >
-              <TabsList className="h-8">
+              <TabsList>
                 <TabsTrigger value="default">{t('proxies.sortDefault')}</TabsTrigger>
                 <TabsTrigger value="delay">{t('proxies.sortDelay')}</TabsTrigger>
                 <TabsTrigger value="name">{t('proxies.sortName')}</TabsTrigger>
@@ -110,7 +110,7 @@ const ProxySettingModal: React.FC<Props> = (props) => {
                 })
               }}
             >
-              <TabsList className="h-8">
+              <TabsList>
                 <TabsTrigger value="hidden">{t('proxies.displayHidden')}</TabsTrigger>
                 <TabsTrigger value="single">{t('proxies.displaySingle')}</TabsTrigger>
                 <TabsTrigger value="double">{t('proxies.displayDouble')}</TabsTrigger>
@@ -126,7 +126,7 @@ const ProxySettingModal: React.FC<Props> = (props) => {
                 })
               }}
             >
-              <TabsList className="h-8">
+              <TabsList>
                 <TabsTrigger value="hidden">{t('proxies.displayHidden')}</TabsTrigger>
                 <TabsTrigger value="single">{t('proxies.displaySingle')}</TabsTrigger>
                 <TabsTrigger value="double">{t('proxies.displayDouble')}</TabsTrigger>

@@ -32,7 +32,7 @@ const ProxySwitches: React.FC = () => {
             patchAppConfig({ mainSwitchMode: value as 'tun' | 'sysproxy' })
           }}
         >
-          <TabsList className="h-8">
+          <TabsList>
             <TabsTrigger value="tun">{t('settings.advanced.mainSwitchTun')}</TabsTrigger>
             <TabsTrigger value="sysproxy">{t('settings.advanced.mainSwitchSysproxy')}</TabsTrigger>
           </TabsList>

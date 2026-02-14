@@ -132,7 +132,7 @@ const GeoData: React.FC = () => {
             patchControledMihomoConfig({ 'geodata-mode': value === 'dat' })
           }}
         >
-          <TabsList className="h-8">
+          <TabsList>
             <TabsTrigger value="db">db</TabsTrigger>
             <TabsTrigger value="dat">dat</TabsTrigger>
           </TabsList>

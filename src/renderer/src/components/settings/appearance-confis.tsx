@@ -197,7 +197,7 @@ const AppearanceConfig: React.FC = () => {
               patchAppConfig({ appTheme: value as AppTheme })
             }}
           >
-            <TabsList className="h-8">
+            <TabsList>
               <TabsTrigger value="system">{t('settings.appearance.auto')}</TabsTrigger>
               <TabsTrigger value="dark">{t('settings.appearance.dark')}</TabsTrigger>
               <TabsTrigger value="light">{t('settings.appearance.light')}</TabsTrigger>

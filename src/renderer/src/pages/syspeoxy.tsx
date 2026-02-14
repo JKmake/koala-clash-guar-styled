@@ -160,7 +160,7 @@ const Sysproxy: React.FC = () => {
             value={values.mode}
             onValueChange={(value) => setValues({ ...values, mode: value as SysProxyMode })}
           >
-            <TabsList className="h-8">
+            <TabsList>
               <TabsTrigger value="manual">{t('pages.sysproxy.manual')}</TabsTrigger>
               <TabsTrigger value="auto">{t('pages.sysproxy.auto')}</TabsTrigger>
             </TabsList>
@@ -187,7 +187,7 @@ const Sysproxy: React.FC = () => {
                   setValues({ ...values, settingMode: value as 'exec' | 'service' })
                 }}
               >
-                <TabsList className="h-8">
+                <TabsList>
                   <TabsTrigger value="exec">{t('pages.sysproxy.execCommand')}</TabsTrigger>
                   <TabsTrigger value="service">{t('pages.sysproxy.serviceMode')}</TabsTrigger>
                 </TabsList>

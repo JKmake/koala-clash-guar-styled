@@ -372,7 +372,7 @@ const Mihomo: React.FC = () => {
         )}
         <SettingItem title={t('pages.mihomo.runningMode')} divider>
           <Tabs value={corePermissionMode} onValueChange={handlePermissionModeChange}>
-            <TabsList className="h-8">
+            <TabsList>
               <TabsTrigger value="elevated">
                 {platform === 'win32'
                   ? t('pages.mihomo.taskSchedule')

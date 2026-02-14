@@ -74,7 +74,7 @@ const ProfileSettingModal: React.FC<Props> = (props) => {
                 })
               }}
             >
-              <TabsList className="h-8">
+              <TabsList>
                 <TabsTrigger value="update">{t('profile.dateUpdated')}</TabsTrigger>
                 <TabsTrigger value="expire">{t('profile.dateExpired')}</TabsTrigger>
               </TabsList>

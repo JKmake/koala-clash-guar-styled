@@ -121,7 +121,7 @@ const Tun: React.FC = () => {
                   await patchAppConfig({ autoSetDNSMode: value as 'none' | 'exec' | 'service' })
                 }}
               >
-                <TabsList className="h-8">
+                <TabsList>
                   <TabsTrigger value="none">{t('pages.tun.noAutoSet')}</TabsTrigger>
                   <TabsTrigger value="exec">{t('pages.tun.execCommand')}</TabsTrigger>
                   <TabsTrigger value="service">{t('pages.tun.serviceMode')}</TabsTrigger>
@@ -134,7 +134,7 @@ const Tun: React.FC = () => {
               value={values.stack}
               onValueChange={(value) => setValues({ ...values, stack: value as TunStack })}
             >
-              <TabsList className="h-8">
+              <TabsList>
                 <TabsTrigger value="gvisor">gVisor</TabsTrigger>
                 <TabsTrigger value="mixed">Mixed</TabsTrigger>
                 <TabsTrigger value="system">System</TabsTrigger>
