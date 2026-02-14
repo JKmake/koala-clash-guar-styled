@@ -77,7 +77,6 @@ const ProxyItem: React.FC<Props> = (props) => {
                   <span className="flag-emoji text-sm truncate" title={proxy.name}>
                     {proxy.name}
                   </span>
-                  {fixed && <FaMapPin className="text-[10px] text-amber-500 shrink-0" />}
                 </div>
                 <div className="text-[11px] text-muted-foreground leading-none mt-0.5">
                   <span>{proxy.type}</span>
