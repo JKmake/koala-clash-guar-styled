@@ -1,15 +1,17 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
-import CollapsedIcon from '@renderer/assets/sidebar/collapsed.svg'
-import ExpandedIcon from '@renderer/assets/sidebar/expanded.svg'
-import Home from '@renderer/assets/sidebar/home_icon.svg'
-import Profile from '@renderer/assets/sidebar/profiles_icon.svg'
-import Proxies from '@renderer/assets/sidebar/proxy_icon.svg'
-import Connections from '@renderer/assets/sidebar/connections_icon.svg'
-import Rules from '@renderer/assets/sidebar/rules_icon.svg'
-import Logs from '@renderer/assets/sidebar/logs_icon.svg'
-import Settings from '@renderer/assets/sidebar/settings_icon.svg'
+import {
+  HomeIcon,
+  ProfileIcon,
+  ProxiesIcon,
+  ConnectionsIcon,
+  RulesIcon,
+  LogsIcon,
+  SettingsIcon,
+  CollapsedIcon,
+  ExpandedIcon
+} from '@renderer/components/icons/sidebar-icons'
 import {
   Sidebar,
   SidebarContent,
@@ -33,13 +35,13 @@ interface AppSidebarProps {
 }
 
 const navItems = [
-  { key: 'main', path: '/home', icon: Home, i18nKey: 'sider.home' },
-  { key: 'profile', path: '/profiles', icon: Profile, i18nKey: 'sider.profileManagement' },
-  { key: 'proxy', path: '/proxies', icon: Proxies, i18nKey: 'sider.proxyGroup' },
-  { key: 'connection', path: '/connections', icon: Connections, i18nKey: 'sider.connection' },
-  { key: 'rule', path: '/rules', icon: Rules, i18nKey: 'sider.rules' },
-  { key: 'log', path: '/logs', icon: Logs, i18nKey: 'sider.logs' },
-  { key: 'settings', path: '/settings', icon: Settings, i18nKey: 'common.settings' }
+  { key: 'main', path: '/home', icon: HomeIcon, i18nKey: 'sider.home' },
+  { key: 'profile', path: '/profiles', icon: ProfileIcon, i18nKey: 'sider.profileManagement' },
+  { key: 'proxy', path: '/proxies', icon: ProxiesIcon, i18nKey: 'sider.proxyGroup' },
+  { key: 'connection', path: '/connections', icon: ConnectionsIcon, i18nKey: 'sider.connection' },
+  { key: 'rule', path: '/rules', icon: RulesIcon, i18nKey: 'sider.rules' },
+  { key: 'log', path: '/logs', icon: LogsIcon, i18nKey: 'sider.logs' },
+  { key: 'settings', path: '/settings', icon: SettingsIcon, i18nKey: 'common.settings' }
 ]
 
 const AppSidebar: React.FC<AppSidebarProps> = ({ latest }) => {
@@ -74,7 +76,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ latest }) => {
                         item.key === 'profile' ? () => setShowRuntimeConfig(true) : undefined
                       }
                     >
-                      <img src={Icon} alt="" className='size-4'/>
+                      <Icon className="size-4" />
                       <span>{t(item.i18nKey)}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -91,7 +93,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({ latest }) => {
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton tooltip={t('common.toggleSidebar')} onClick={toggleSidebar}>
-                <img src={collapsed ? CollapsedIcon : ExpandedIcon} alt="" className="size-4 shrink-0" />
+                {collapsed ? <CollapsedIcon className="size-4 shrink-0" /> : <ExpandedIcon className="size-4 shrink-0" />}
                 <span>{t('common.hideSidebar')}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
